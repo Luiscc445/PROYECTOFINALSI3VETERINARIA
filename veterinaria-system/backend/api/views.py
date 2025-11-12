@@ -7,10 +7,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.hashers import check_password
+from django.contrib.auth.hashers import check_password, make_password
 from django.utils import timezone
 from django.db.models import Count, Q
 from datetime import timedelta
+import secrets
+import string
 from .models import (
     Rol, Usuario, Tutor, Mascota, Cita,
     HistorialMedico, Inventario, MovimientoInventario
@@ -61,6 +63,56 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return UsuarioListSerializer
         return UsuarioSerializer
+
+    def _generar_password(self):
+        """Genera una contraseña segura aleatoria"""
+        alphabet = string.ascii_letters + string.digits + "!@#$%&*"
+        password = ''.join(secrets.choice(alphabet) for i in range(12))
+        return password
+
+    def create(self, request, *args, **kwargs):
+        """Crea usuario con contraseña hasheada o generada automáticamente"""
+        data = request.data.copy()
+
+        # Generar contraseña si no se proporciona
+        password_generada = None
+        if not data.get('password_hash') or data.get('password_hash').strip() == '':
+            password_generada = self._generar_password()
+            data['password_hash'] = make_password(password_generada)
+        else:
+            # Hashear la contraseña proporcionada
+            data['password_hash'] = make_password(data['password_hash'])
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        # Incluir contraseña generada en la respuesta
+        response_data = serializer.data
+        if password_generada:
+            response_data['password_generada'] = password_generada
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        """Actualiza usuario, hasheando contraseña solo si se proporciona"""
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        data = request.data.copy()
+
+        # Solo actualizar contraseña si se proporciona
+        if 'password_hash' in data and data['password_hash']:
+            data['password_hash'] = make_password(data['password_hash'])
+        else:
+            # Eliminar campo de contraseña si está vacío para no actualizarlo
+            data.pop('password_hash', None)
+
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
     def veterinarios(self, request):

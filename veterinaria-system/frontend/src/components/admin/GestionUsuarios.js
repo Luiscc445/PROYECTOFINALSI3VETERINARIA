@@ -12,6 +12,7 @@ const GestionUsuarios = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [toast, setToast] = useState(null);
+  const [passwordGenerada, setPasswordGenerada] = useState(null);
   const [formData, setFormData] = useState({
     email: '',
     password_hash: '',
@@ -72,12 +73,23 @@ const GestionUsuarios = () => {
       if (editingId) {
         await usuariosAPI.update(editingId, formData);
         showToast('✓ Usuario actualizado exitosamente', 'success');
+        cargarUsuarios();
+        cerrarModal();
       } else {
-        await usuariosAPI.create(formData);
-        showToast('✓ Usuario creado exitosamente', 'success');
+        const response = await usuariosAPI.create(formData);
+
+        // Verificar si se generó una contraseña automática
+        if (response.data.password_generada) {
+          setPasswordGenerada(response.data.password_generada);
+          showToast('✓ Usuario creado exitosamente. Contraseña generada mostrada en pantalla.', 'success');
+        } else {
+          showToast('✓ Usuario creado exitosamente', 'success');
+          cargarUsuarios();
+          cerrarModal();
+        }
+
+        cargarUsuarios();
       }
-      cargarUsuarios();
-      cerrarModal();
     } catch (error) {
       console.error('Error guardando usuario:', error);
       const errorMsg = error.response?.data?.error ||
@@ -135,6 +147,7 @@ const GestionUsuarios = () => {
   const cerrarModal = () => {
     setShowModal(false);
     setEditingId(null);
+    setPasswordGenerada(null);
   };
 
   if (loading) {
@@ -210,6 +223,52 @@ const GestionUsuarios = () => {
         </table>
       </div>
 
+      {passwordGenerada && (
+        <div className="modal-overlay" onClick={cerrarModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h2>🔑 Contraseña Generada</h2>
+            </div>
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+              <p style={{ marginBottom: '15px', color: '#666' }}>
+                Se ha generado una contraseña segura para el usuario. Por favor, cópiala y guárdala en un lugar seguro.
+              </p>
+              <div style={{
+                background: '#f8f9fa',
+                border: '2px solid #4CAF50',
+                borderRadius: '8px',
+                padding: '20px',
+                marginBottom: '20px',
+                fontFamily: 'monospace',
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: '#2c3e50',
+                letterSpacing: '2px',
+                wordBreak: 'break-all'
+              }}>
+                {passwordGenerada}
+              </div>
+              <p style={{ marginBottom: '20px', color: '#e74c3c', fontSize: '14px' }}>
+                ⚠️ Esta contraseña solo se mostrará una vez. Asegúrate de copiarla ahora.
+              </p>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  navigator.clipboard.writeText(passwordGenerada);
+                  showToast('✓ Contraseña copiada al portapapeles', 'success');
+                }}
+                style={{ marginRight: '10px' }}
+              >
+                📋 Copiar Contraseña
+              </button>
+              <button className="btn btn-secondary" onClick={cerrarModal}>
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showModal && (
         <div className="modal-overlay" onClick={cerrarModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -230,14 +289,18 @@ const GestionUsuarios = () => {
               </div>
 
               <div className="form-group">
-                <label>Contraseña {!editingId && '*'}</label>
+                <label>Contraseña {editingId && '(opcional)'}</label>
                 <input
                   type="password"
                   value={formData.password_hash}
                   onChange={(e) => setFormData({ ...formData, password_hash: e.target.value })}
-                  required={!editingId}
-                  placeholder={editingId ? 'Dejar en blanco para no cambiar' : 'Contraseña segura'}
+                  placeholder={editingId ? 'Dejar en blanco para no cambiar' : 'Dejar vacío para generar automáticamente'}
                 />
+                {!editingId && (
+                  <small style={{ color: '#666', fontSize: '12px', display: 'block', marginTop: '5px' }}>
+                    💡 Si dejas este campo vacío, se generará una contraseña segura automáticamente
+                  </small>
+                )}
               </div>
 
               <div className="form-group">

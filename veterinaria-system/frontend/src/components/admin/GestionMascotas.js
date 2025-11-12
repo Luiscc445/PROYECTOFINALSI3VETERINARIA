@@ -3,6 +3,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { mascotasAPI, tutoresAPI } from '../../services/api';
+import Toast from '../Toast';
 import '../../styles/Tables.css';
 
 const GestionMascotas = () => {
@@ -10,6 +11,7 @@ const GestionMascotas = () => {
   const [tutores, setTutores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [toast, setToast] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     tutor: '',
@@ -22,6 +24,10 @@ const GestionMascotas = () => {
     peso_kg: '',
     activo: true,
   });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+  };
 
   useEffect(() => {
     cargarDatos();
@@ -37,6 +43,7 @@ const GestionMascotas = () => {
       setTutores(tutoresRes.data.results || tutoresRes.data);
     } catch (error) {
       console.error('Error cargando datos:', error);
+      showToast('✕ Error al cargar datos', 'error');
     } finally {
       setLoading(false);
     }
@@ -83,15 +90,19 @@ const GestionMascotas = () => {
     try {
       if (editingId) {
         await mascotasAPI.update(editingId, formData);
+        showToast('✓ Mascota actualizada exitosamente', 'success');
       } else {
         await mascotasAPI.create(formData);
+        showToast('✓ Mascota creada exitosamente', 'success');
       }
       cargarDatos();
       cerrarModal();
-      alert(editingId ? 'Mascota actualizada' : 'Mascota creada exitosamente');
     } catch (error) {
       console.error('Error guardando mascota:', error);
-      alert('Error al guardar mascota');
+      const errorMsg = error.response?.data?.error ||
+                       error.response?.data?.message ||
+                       'Error al guardar mascota';
+      showToast(`✕ ${errorMsg}`, 'error');
     }
   };
 
@@ -99,11 +110,14 @@ const GestionMascotas = () => {
     if (window.confirm('¿Está seguro de eliminar esta mascota?')) {
       try {
         await mascotasAPI.delete(id);
+        showToast('✓ Mascota eliminada exitosamente', 'success');
         cargarDatos();
-        alert('Mascota eliminada');
       } catch (error) {
         console.error('Error eliminando mascota:', error);
-        alert('Error al eliminar mascota');
+        const errorMsg = error.response?.data?.error ||
+                         error.response?.data?.message ||
+                         'Error al eliminar mascota';
+        showToast(`✕ ${errorMsg}`, 'error');
       }
     }
   };
@@ -114,11 +128,24 @@ const GestionMascotas = () => {
 
   return (
     <div className="gestion-container">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
       <div className="gestion-header">
         <h1>Gestión de Mascotas</h1>
-        <button className="btn btn-primary" onClick={() => abrirModal()}>
-          + Nueva Mascota
-        </button>
+        <div>
+          <button className="btn btn-secondary" onClick={cargarDatos} style={{ marginRight: '10px' }}>
+            🔄 Actualizar
+          </button>
+          <button className="btn btn-primary" onClick={() => abrirModal()}>
+            + Nueva Mascota
+          </button>
+        </div>
       </div>
 
       <div className="table-container">
@@ -143,7 +170,7 @@ const GestionMascotas = () => {
                 <td>{mascota.nombre}</td>
                 <td>{mascota.especie}</td>
                 <td>{mascota.raza}</td>
-                <td>{mascota.tutor_nombre_completo || 'N/A'}</td>
+                <td>{mascota.tutor_nombre || 'N/A'}</td>
                 <td>{mascota.sexo}</td>
                 <td>{mascota.peso_kg}</td>
                 <td>

@@ -3,12 +3,15 @@
  */
 import React, { useState, useEffect } from 'react';
 import { tutoresAPI, usuariosAPI, rolesAPI } from '../../services/api';
+import Toast from '../Toast';
 import '../../styles/Tables.css';
 
 const GestionTutores = () => {
   const [tutores, setTutores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [passwordGenerada, setPasswordGenerada] = useState(null);
   const [roles, setRoles] = useState([]);
   const [formData, setFormData] = useState({
     // Datos de Usuario
@@ -22,6 +25,10 @@ const GestionTutores = () => {
     fecha_nacimiento: '',
   });
 
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+  };
+
   useEffect(() => {
     cargarTutores();
     cargarRoles();
@@ -33,6 +40,7 @@ const GestionTutores = () => {
       setTutores(response.data.results || response.data);
     } catch (error) {
       console.error('Error cargando tutores:', error);
+      showToast('✕ Error al cargar tutores', 'error');
     } finally {
       setLoading(false);
     }
@@ -41,9 +49,10 @@ const GestionTutores = () => {
   const cargarRoles = async () => {
     try {
       const response = await rolesAPI.getAll();
-      setRoles(response.data);
+      setRoles(response.data.results || response.data);
     } catch (error) {
       console.error('Error cargando roles:', error);
+      showToast('✕ Error al cargar roles', 'error');
     }
   };
 
@@ -62,6 +71,7 @@ const GestionTutores = () => {
 
   const cerrarModal = () => {
     setShowModal(false);
+    setPasswordGenerada(null);
   };
 
   const handleSubmit = async (e) => {
@@ -70,14 +80,14 @@ const GestionTutores = () => {
       // Paso 1: Buscar el rol "tutor"
       const rolTutor = roles.find(r => r.nombre === 'tutor');
       if (!rolTutor) {
-        alert('Error: No se encontró el rol "tutor"');
+        showToast('✕ Error: No se encontró el rol "tutor"', 'error');
         return;
       }
 
       // Paso 2: Crear el usuario con rol de tutor
       const usuarioData = {
         email: formData.email,
-        password_hash: formData.password_hash,
+        password_hash: formData.password_hash, // Si está vacío, se generará automáticamente
         nombre_completo: formData.nombre_completo,
         telefono: formData.telefono,
         rol: rolTutor.id,
@@ -97,18 +107,25 @@ const GestionTutores = () => {
 
       await tutoresAPI.create(tutorData);
 
-      // Recargar la lista de tutores y cerrar modal
+      // Verificar si se generó una contraseña automática
+      if (nuevoUsuario.password_generada) {
+        setPasswordGenerada(nuevoUsuario.password_generada);
+        showToast('✓ Tutor creado exitosamente. Contraseña generada mostrada en pantalla.', 'success');
+      } else {
+        showToast('✓ Tutor creado exitosamente', 'success');
+        cerrarModal();
+      }
+
+      // Recargar la lista de tutores
       cargarTutores();
-      cerrarModal();
-      alert('Tutor creado exitosamente');
     } catch (error) {
       console.error('Error guardando tutor:', error);
-      if (error.response && error.response.data) {
-        const errorMsg = JSON.stringify(error.response.data);
-        alert(`Error al guardar tutor: ${errorMsg}`);
-      } else {
-        alert('Error al guardar tutor');
-      }
+      const errorMsg = error.response?.data?.email?.[0] ||
+                       error.response?.data?.ci?.[0] ||
+                       error.response?.data?.error ||
+                       error.response?.data?.message ||
+                       'Error al guardar tutor';
+      showToast(`✕ ${errorMsg}`, 'error');
     }
   };
 
@@ -116,9 +133,11 @@ const GestionTutores = () => {
     try {
       const response = await tutoresAPI.getMascotas(id);
       const mascotas = response.data;
-      alert(`Mascotas: ${mascotas.map(m => m.nombre).join(', ') || 'Sin mascotas'}`);
+      const mascotasNombres = mascotas.map(m => m.nombre).join(', ') || 'Sin mascotas';
+      showToast(`🐾 Mascotas: ${mascotasNombres}`, 'info');
     } catch (error) {
       console.error('Error cargando mascotas:', error);
+      showToast('✕ Error al cargar mascotas', 'error');
     }
   };
 
@@ -128,11 +147,70 @@ const GestionTutores = () => {
 
   return (
     <div className="gestion-container">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
+      {passwordGenerada && (
+        <div className="modal-overlay" onClick={cerrarModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h2>🔑 Contraseña Generada</h2>
+            </div>
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+              <p style={{ marginBottom: '15px', color: '#666' }}>
+                Se ha generado una contraseña segura para el tutor. Por favor, cópiala y guárdala en un lugar seguro.
+              </p>
+              <div style={{
+                background: '#f8f9fa',
+                border: '2px solid #4CAF50',
+                borderRadius: '8px',
+                padding: '20px',
+                marginBottom: '20px',
+                fontFamily: 'monospace',
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: '#2c3e50',
+                letterSpacing: '2px',
+                wordBreak: 'break-all'
+              }}>
+                {passwordGenerada}
+              </div>
+              <p style={{ marginBottom: '20px', color: '#e74c3c', fontSize: '14px' }}>
+                ⚠️ Esta contraseña solo se mostrará una vez. Asegúrate de copiarla ahora.
+              </p>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  navigator.clipboard.writeText(passwordGenerada);
+                  showToast('✓ Contraseña copiada al portapapeles', 'success');
+                }}
+                style={{ marginRight: '10px' }}
+              >
+                📋 Copiar Contraseña
+              </button>
+              <button className="btn btn-secondary" onClick={cerrarModal}>
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="gestion-header">
         <h1>Gestión de Tutores</h1>
-        <button className="btn btn-primary" onClick={() => abrirModal()}>
-          + Nuevo Tutor
-        </button>
+        <div>
+          <button className="btn btn-secondary" onClick={cargarTutores} style={{ marginRight: '10px' }}>
+            🔄 Actualizar
+          </button>
+          <button className="btn btn-primary" onClick={() => abrirModal()}>
+            + Nuevo Tutor
+          </button>
+        </div>
       </div>
 
       <div className="table-container">
@@ -194,14 +272,16 @@ const GestionTutores = () => {
               </div>
 
               <div className="form-group">
-                <label>Contraseña *</label>
+                <label>Contraseña (opcional)</label>
                 <input
                   type="password"
                   value={formData.password_hash}
                   onChange={(e) => setFormData({ ...formData, password_hash: e.target.value })}
-                  required
-                  placeholder="Contraseña del usuario"
+                  placeholder="Dejar vacío para generar automáticamente"
                 />
+                <small style={{ color: '#666', fontSize: '12px', display: 'block', marginTop: '5px' }}>
+                  💡 Si dejas este campo vacío, se generará una contraseña segura automáticamente
+                </small>
               </div>
 
               <div className="form-group">
