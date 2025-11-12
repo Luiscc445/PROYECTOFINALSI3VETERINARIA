@@ -3,6 +3,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { usuariosAPI, rolesAPI } from '../../services/api';
+import Toast from '../Toast';
 import '../../styles/Tables.css';
 
 const GestionUsuarios = () => {
@@ -10,6 +11,7 @@ const GestionUsuarios = () => {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [toast, setToast] = useState(null);
   const [formData, setFormData] = useState({
     email: '',
     password_hash: '',
@@ -19,6 +21,10 @@ const GestionUsuarios = () => {
     activo: true,
   });
   const [editingId, setEditingId] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+  };
 
   useEffect(() => {
     cargarUsuarios();
@@ -31,6 +37,7 @@ const GestionUsuarios = () => {
       setUsuarios(response.data.results || response.data);
     } catch (error) {
       console.error('Error cargando usuarios:', error);
+      showToast('Error al cargar usuarios', 'error');
     } finally {
       setLoading(false);
     }
@@ -42,6 +49,7 @@ const GestionUsuarios = () => {
       setRoles(response.data);
     } catch (error) {
       console.error('Error cargando roles:', error);
+      showToast('Error al cargar roles', 'error');
     }
   };
 
@@ -50,14 +58,20 @@ const GestionUsuarios = () => {
     try {
       if (editingId) {
         await usuariosAPI.update(editingId, formData);
+        showToast('✓ Usuario actualizado exitosamente', 'success');
       } else {
         await usuariosAPI.create(formData);
+        showToast('✓ Usuario creado exitosamente', 'success');
       }
       cargarUsuarios();
       cerrarModal();
     } catch (error) {
       console.error('Error guardando usuario:', error);
-      alert('Error al guardar usuario');
+      const errorMsg = error.response?.data?.error ||
+                       error.response?.data?.email?.[0] ||
+                       error.response?.data?.message ||
+                       'Error al guardar usuario';
+      showToast(`✕ ${errorMsg}`, 'error');
     }
   };
 
@@ -65,22 +79,29 @@ const GestionUsuarios = () => {
     if (window.confirm('¿Está seguro de eliminar este usuario?')) {
       try {
         await usuariosAPI.delete(id);
+        showToast('✓ Usuario eliminado exitosamente', 'success');
         cargarUsuarios();
       } catch (error) {
         console.error('Error eliminando usuario:', error);
-        alert('Error al eliminar usuario');
+        const errorMsg = error.response?.data?.error ||
+                         error.response?.data?.message ||
+                         'Error al eliminar usuario. Puede tener dependencias.';
+        showToast(`✕ ${errorMsg}`, 'error');
       }
     }
   };
 
   const abrirModal = (usuario = null) => {
     if (usuario) {
+      // FIX: Obtener el ID del rol correctamente
+      const rolId = usuario.rol_id || usuario.rol?.id || usuario.rol;
+
       setFormData({
         email: usuario.email,
         password_hash: '',
         nombre_completo: usuario.nombre_completo,
         telefono: usuario.telefono || '',
-        rol: usuario.rol,
+        rol: rolId, // ← FIX: Usar el ID del rol, no el objeto
         activo: usuario.activo,
       });
       setEditingId(usuario.id);
@@ -109,6 +130,14 @@ const GestionUsuarios = () => {
 
   return (
     <div className="gestion-container">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
       <div className="gestion-header">
         <h1>Gestión de Usuarios</h1>
         <button className="btn btn-primary" onClick={() => abrirModal()}>
@@ -183,6 +212,7 @@ const GestionUsuarios = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
+                  placeholder="usuario@ejemplo.com"
                 />
               </div>
 
@@ -193,7 +223,7 @@ const GestionUsuarios = () => {
                   value={formData.password_hash}
                   onChange={(e) => setFormData({ ...formData, password_hash: e.target.value })}
                   required={!editingId}
-                  placeholder={editingId ? 'Dejar en blanco para no cambiar' : ''}
+                  placeholder={editingId ? 'Dejar en blanco para no cambiar' : 'Contraseña segura'}
                 />
               </div>
 
@@ -204,6 +234,7 @@ const GestionUsuarios = () => {
                   value={formData.nombre_completo}
                   onChange={(e) => setFormData({ ...formData, nombre_completo: e.target.value })}
                   required
+                  placeholder="Juan Pérez"
                 />
               </div>
 
@@ -213,6 +244,7 @@ const GestionUsuarios = () => {
                   type="text"
                   value={formData.telefono}
                   onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                  placeholder="77123456"
                 />
               </div>
 
@@ -226,7 +258,7 @@ const GestionUsuarios = () => {
                   <option value="">Seleccione un rol</option>
                   {roles.map((rol) => (
                     <option key={rol.id} value={rol.id}>
-                      {rol.nombre}
+                      {rol.nombre.charAt(0).toUpperCase() + rol.nombre.slice(1)}
                     </option>
                   ))}
                 </select>
@@ -248,7 +280,7 @@ const GestionUsuarios = () => {
                   Cancelar
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  Guardar
+                  {editingId ? 'Actualizar' : 'Crear'} Usuario
                 </button>
               </div>
             </form>
