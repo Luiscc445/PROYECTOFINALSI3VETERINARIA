@@ -5,6 +5,8 @@ Incluye más de 40 endpoints para gestión completa.
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from django.contrib.auth import authenticate, login
 from django.utils import timezone
 from django.db.models import Count, Q
 from datetime import timedelta
@@ -353,6 +355,54 @@ class DashboardViewSet(viewsets.ViewSet):
         }
 
         return Response(estadisticas)
+
+
+class LoginView(APIView):
+    """
+    Vista para autenticación de usuarios.
+    Endpoint:
+    - POST /api/auth/login/
+    """
+    permission_classes = []  # Permitir acceso sin autenticación
+
+    def post(self, request):
+        """
+        Autentica un usuario con email y password.
+        POST /api/auth/login/
+        Body: {"email": "user@example.com", "password": "password123"}
+        """
+        email = request.data.get('email')
+        password = request.data.get('password')
+
+        if not email or not password:
+            return Response(
+                {'error': 'Email y contraseña son requeridos'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Buscar el usuario por email
+            usuario = Usuario.objects.select_related('rol').get(email=email, activo=True)
+
+            # Verificar la contraseña (comparación directa para este ejemplo)
+            # NOTA: En producción deberías usar Django's check_password
+            if usuario.password_hash == password:
+                # Crear sesión (opcional si usas SessionAuthentication)
+                # login(request, usuario)
+
+                # Serializar los datos del usuario
+                serializer = UsuarioSerializer(usuario)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {'error': 'Credenciales inválidas'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+        except Usuario.DoesNotExist:
+            return Response(
+                {'error': 'Credenciales inválidas'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
 
 # Necesario importar models para usar F()

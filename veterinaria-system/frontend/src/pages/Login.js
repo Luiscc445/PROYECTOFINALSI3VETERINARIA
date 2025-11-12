@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { authAPI } from '../services/api';
 import '../styles/Login.css';
 
 const Login = () => {
@@ -14,42 +15,42 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Usuarios de prueba (simulación - en producción esto vendría del backend)
-  const usuariosPrueba = [
-    { email: 'admin@veterinaria.com', password: 'admin123', rol_nombre: 'administrador', nombre_completo: 'Admin Sistema', id: 1 },
-    { email: 'vet1@veterinaria.com', password: 'vet123', rol_nombre: 'veterinario', nombre_completo: 'Dr. Carlos Méndez', id: 2 },
-    { email: 'tutor1@gmail.com', password: 'tutor123', rol_nombre: 'tutor', nombre_completo: 'Juan Pérez', id: 4 },
-  ];
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      // Simulación de login (en producción usar authAPI.login)
-      const usuario = usuariosPrueba.find(
-        u => u.email === email && u.password === password
-      );
+      // Autenticación real contra el backend
+      const response = await authAPI.login({
+        email,
+        password: password  // Enviar password directamente (sin hash)
+      });
 
-      if (usuario) {
-        const { password, ...userData } = usuario;
-        login(userData);
+      // Si la autenticación es exitosa, recibimos los datos del usuario
+      const userData = response.data;
+      login(userData);
 
-        // Redirigir según el rol
-        if (usuario.rol_nombre === 'administrador') {
-          navigate('/admin');
-        } else if (usuario.rol_nombre === 'veterinario') {
-          navigate('/veterinario');
-        } else if (usuario.rol_nombre === 'tutor') {
-          navigate('/tutor');
-        }
+      // Redirigir según el rol del usuario
+      if (userData.rol_nombre === 'administrador') {
+        navigate('/admin');
+      } else if (userData.rol_nombre === 'veterinario') {
+        navigate('/veterinario');
+      } else if (userData.rol_nombre === 'tutor') {
+        navigate('/tutor');
       } else {
-        setError('Credenciales inválidas');
+        navigate('/'); // Redirigir a home si no tiene un rol conocido
       }
     } catch (err) {
-      setError('Error al iniciar sesión');
-      console.error(err);
+      // Manejar errores de autenticación
+      if (err.response && err.response.data && err.response.data.error) {
+        setError(err.response.data.error);
+      } else if (err.response && err.response.status === 401) {
+        setError('Credenciales inválidas');
+      } else {
+        setError('Error al iniciar sesión. Por favor, intente nuevamente.');
+      }
+      console.error('Error de login:', err);
     } finally {
       setLoading(false);
     }
