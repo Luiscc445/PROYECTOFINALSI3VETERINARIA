@@ -1,7 +1,7 @@
 /**
  * GestionUsuarios - CRUD de usuarios
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { usuariosAPI, rolesAPI } from '../../services/api';
 import Toast from '../Toast';
 import '../../styles/Tables.css';
@@ -26,12 +26,7 @@ const GestionUsuarios = () => {
     setToast({ message, type });
   };
 
-  useEffect(() => {
-    cargarUsuarios();
-    cargarRoles();
-  }, []);
-
-  const cargarUsuarios = async () => {
+  const cargarUsuarios = useCallback(async () => {
     try {
       const response = await usuariosAPI.getAll();
       setUsuarios(response.data.results || response.data);
@@ -41,9 +36,9 @@ const GestionUsuarios = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const cargarRoles = async () => {
+  const cargarRoles = useCallback(async () => {
     try {
       const response = await rolesAPI.getAll();
       console.log('Respuesta de roles:', response);
@@ -64,7 +59,12 @@ const GestionUsuarios = () => {
                        'No se pudo conectar con el servidor. Verifica que el backend esté corriendo.';
       showToast(`✕ Error al cargar roles: ${errorMsg}`, 'error');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    cargarUsuarios();
+    cargarRoles();
+  }, [cargarUsuarios, cargarRoles]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
