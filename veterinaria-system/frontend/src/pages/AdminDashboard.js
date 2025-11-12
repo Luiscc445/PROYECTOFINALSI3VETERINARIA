@@ -8,6 +8,8 @@ import Sidebar from '../components/Sidebar';
 import AdminHome from '../components/admin/AdminHome';
 import GestionUsuarios from '../components/admin/GestionUsuarios';
 import GestionTutores from '../components/admin/GestionTutores';
+import GestionMascotas from '../components/admin/GestionMascotas';
+import GestionCitas from '../components/admin/GestionCitas';
 import GestionInventario from '../components/admin/GestionInventario';
 import '../styles/Dashboard.css';
 
@@ -16,6 +18,8 @@ const AdminDashboard = () => {
     { path: '/admin', label: 'Inicio', icon: '🏠', end: true },
     { path: '/admin/usuarios', label: 'Usuarios', icon: '👥' },
     { path: '/admin/tutores', label: 'Tutores', icon: '👨‍👩‍👧' },
+    { path: '/admin/mascotas', label: 'Mascotas', icon: '🐾' },
+    { path: '/admin/citas', label: 'Citas', icon: '📅' },
     { path: '/admin/inventario', label: 'Inventario', icon: '📦' },
   ];
 
@@ -29,6 +33,8 @@ const AdminDashboard = () => {
             <Route path="/" element={<AdminHome />} />
             <Route path="/usuarios" element={<GestionUsuarios />} />
             <Route path="/tutores" element={<GestionTutores />} />
+            <Route path="/mascotas" element={<GestionMascotas />} />
+            <Route path="/citas" element={<GestionCitas />} />
             <Route path="/inventario" element={<GestionInventario />} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>
