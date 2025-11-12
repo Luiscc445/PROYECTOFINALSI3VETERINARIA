@@ -37,6 +37,7 @@ class RolViewSet(viewsets.ModelViewSet):
     queryset = Rol.objects.all()
     serializer_class = RolSerializer
     filterset_fields = ['nombre']
+    permission_classes = []  # Permitir acceso sin autenticación
 
 
 class UsuarioViewSet(viewsets.ModelViewSet):

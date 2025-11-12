@@ -46,10 +46,23 @@ const GestionUsuarios = () => {
   const cargarRoles = async () => {
     try {
       const response = await rolesAPI.getAll();
-      setRoles(response.data);
+      console.log('Respuesta de roles:', response);
+
+      // Manejar diferentes formatos de respuesta
+      const rolesData = response.data.results || response.data;
+      setRoles(rolesData);
+
+      if (!rolesData || rolesData.length === 0) {
+        showToast('⚠️ No hay roles disponibles en el sistema', 'warning');
+      }
     } catch (error) {
       console.error('Error cargando roles:', error);
-      showToast('Error al cargar roles', 'error');
+      console.error('Detalles del error:', error.response);
+
+      const errorMsg = error.response?.data?.detail ||
+                       error.response?.statusText ||
+                       'No se pudo conectar con el servidor. Verifica que el backend esté corriendo.';
+      showToast(`✕ Error al cargar roles: ${errorMsg}`, 'error');
     }
   };
 
