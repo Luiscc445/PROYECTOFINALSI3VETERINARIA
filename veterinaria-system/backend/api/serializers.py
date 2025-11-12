@@ -5,7 +5,7 @@ Incluye serializers para los 8 modelos principales.
 from rest_framework import serializers
 from .models import (
     Rol, Usuario, Tutor, Mascota, Cita,
-    HistorialMedico, Inventario, MovimientoInventario
+    HistorialMedico, Inventario, MovimientoInventario, RecetaMedicamento
 )
 
 
@@ -126,19 +126,73 @@ class CitaSerializer(serializers.ModelSerializer):
         return value
 
 
+class RecetaMedicamentoSerializer(serializers.ModelSerializer):
+    """Serializer para el modelo RecetaMedicamento"""
+    medicamento_nombre = serializers.CharField(source='inventario.nombre', read_only=True)
+    medicamento_categoria = serializers.CharField(source='inventario.categoria', read_only=True)
+
+    class Meta:
+        model = RecetaMedicamento
+        fields = [
+            'id', 'historial_medico', 'inventario', 'medicamento_nombre',
+            'medicamento_categoria', 'cantidad', 'dosis', 'duracion_dias',
+            'indicaciones', 'created_at'
+        ]
+        read_only_fields = ['created_at']
+
+
+class RecetaMedicamentoCreateSerializer(serializers.ModelSerializer):
+    """Serializer para crear recetas de medicamentos"""
+
+    class Meta:
+        model = RecetaMedicamento
+        fields = ['inventario', 'cantidad', 'dosis', 'duracion_dias', 'indicaciones']
+
+    def validate_cantidad(self, value):
+        """Valida que la cantidad sea positiva"""
+        if value <= 0:
+            raise serializers.ValidationError("La cantidad debe ser mayor a 0")
+        return value
+
+    def validate_duracion_dias(self, value):
+        """Valida que la duración sea positiva"""
+        if value <= 0:
+            raise serializers.ValidationError("La duración debe ser mayor a 0 días")
+        return value
+
+
 class HistorialMedicoSerializer(serializers.ModelSerializer):
     """Serializer para el modelo HistorialMedico"""
     mascota_nombre = serializers.CharField(source='mascota.nombre', read_only=True)
     veterinario_nombre = serializers.CharField(source='veterinario.nombre_completo', read_only=True)
+    medicamentos_recetados = RecetaMedicamentoSerializer(many=True, read_only=True)
 
     class Meta:
         model = HistorialMedico
         fields = [
             'id', 'mascota', 'mascota_nombre', 'veterinario',
             'veterinario_nombre', 'fecha', 'tipo', 'diagnostico',
-            'tratamiento', 'medicamentos', 'peso_kg', 'temperatura_c',
-            'observaciones', 'proxima_visita', 'created_at'
+            'tratamiento', 'medicamentos', 'medicamentos_recetados',
+            'peso_kg', 'temperatura_c', 'observaciones', 'proxima_visita', 'created_at'
         ]
+
+
+class HistorialMedicoCreateSerializer(serializers.Serializer):
+    """Serializer para crear historial médico con medicamentos"""
+    # Datos del historial
+    mascota = serializers.IntegerField()
+    veterinario = serializers.IntegerField()
+    fecha = serializers.DateField()
+    tipo = serializers.ChoiceField(choices=HistorialMedico.TIPO_CHOICES)
+    diagnostico = serializers.CharField()
+    tratamiento = serializers.CharField()
+    peso_kg = serializers.DecimalField(max_digits=6, decimal_places=2, required=False, allow_null=True)
+    temperatura_c = serializers.DecimalField(max_digits=4, decimal_places=1, required=False, allow_null=True)
+    observaciones = serializers.CharField(required=False, allow_blank=True)
+    proxima_visita = serializers.DateField(required=False, allow_null=True)
+
+    # Lista de medicamentos
+    medicamentos_recetados = RecetaMedicamentoCreateSerializer(many=True, required=False)
 
 
 class InventarioSerializer(serializers.ModelSerializer):

@@ -6,14 +6,14 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import VetHome from '../components/veterinario/VetHome';
-import GestionCitas from '../components/veterinario/GestionCitas';
+import VeterinarioConsultas from '../components/veterinario/VeterinarioConsultas';
 import HistorialesMedicos from '../components/veterinario/HistorialesMedicos';
 import '../styles/Dashboard.css';
 
 const VeterinarioDashboard = () => {
   const sidebarLinks = [
     { path: '/veterinario', label: 'Inicio', icon: '🏠', end: true },
-    { path: '/veterinario/citas', label: 'Citas', icon: '📅' },
+    { path: '/veterinario/consultas', label: 'Consultas y Recetas', icon: '🩺' },
     { path: '/veterinario/historiales', label: 'Historiales', icon: '📋' },
   ];
 
@@ -25,7 +25,7 @@ const VeterinarioDashboard = () => {
         <main className="main-content">
           <Routes>
             <Route path="/" element={<VetHome />} />
-            <Route path="/citas" element={<GestionCitas />} />
+            <Route path="/consultas" element={<VeterinarioConsultas />} />
             <Route path="/historiales" element={<HistorialesMedicos />} />
             <Route path="*" element={<Navigate to="/veterinario" replace />} />
           </Routes>

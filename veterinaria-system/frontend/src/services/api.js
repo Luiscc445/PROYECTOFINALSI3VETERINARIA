@@ -130,6 +130,7 @@ export const historialesAPI = {
   getAll: (params) => api.get('/historiales/', { params }),
   getById: (id) => api.get(`/historiales/${id}/`),
   create: (data) => api.post('/historiales/', data),
+  crearConMedicamentos: (data) => api.post('/historiales/crear_con_medicamentos/', data),
   update: (id, data) => api.put(`/historiales/${id}/`, data),
   delete: (id) => api.delete(`/historiales/${id}/`),
 };
@@ -144,6 +145,7 @@ export const inventarioAPI = {
   update: (id, data) => api.put(`/inventario/${id}/`, data),
   delete: (id) => api.delete(`/inventario/${id}/`),
   getBajoStock: () => api.get('/inventario/bajo_stock/'),
+  getMedicamentos: () => api.get('/inventario/medicamentos/'),
   registrarMovimiento: (id, movimiento) => api.post(`/inventario/${id}/registrar_movimiento/`, movimiento),
 };
 

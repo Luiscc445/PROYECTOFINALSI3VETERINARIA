@@ -5,7 +5,7 @@ Registra todos los modelos para su gestión.
 from django.contrib import admin
 from .models import (
     Rol, Usuario, Tutor, Mascota, Cita,
-    HistorialMedico, Inventario, MovimientoInventario
+    HistorialMedico, Inventario, MovimientoInventario, RecetaMedicamento
 )
 
 
@@ -104,3 +104,19 @@ class MovimientoInventarioAdmin(admin.ModelAdmin):
     def get_usuario(self, obj):
         return obj.usuario.nombre_completo
     get_usuario.short_description = 'Usuario'
+
+
+@admin.register(RecetaMedicamento)
+class RecetaMedicamentoAdmin(admin.ModelAdmin):
+    list_display = ('get_mascota', 'get_medicamento', 'cantidad', 'dosis', 'duracion_dias', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('historial_medico__mascota__nombre', 'inventario__nombre')
+    ordering = ('-created_at',)
+
+    def get_mascota(self, obj):
+        return obj.historial_medico.mascota.nombre
+    get_mascota.short_description = 'Mascota'
+
+    def get_medicamento(self, obj):
+        return obj.inventario.nombre
+    get_medicamento.short_description = 'Medicamento'

@@ -266,3 +266,45 @@ class MovimientoInventario(models.Model):
 
     def __str__(self):
         return f"{self.tipo_movimiento} - {self.inventario.nombre} - {self.cantidad} - {self.fecha.strftime('%d/%m/%Y')}"
+
+
+class RecetaMedicamento(models.Model):
+    """
+    Modelo intermedio para vincular medicamentos del inventario con historiales médicos.
+    Permite registrar qué medicamentos se recetaron en cada consulta.
+    """
+    historial_medico = models.ForeignKey(
+        HistorialMedico,
+        on_delete=models.CASCADE,
+        related_name='medicamentos_recetados'
+    )
+    inventario = models.ForeignKey(
+        Inventario,
+        on_delete=models.PROTECT,
+        related_name='recetas'
+    )
+    cantidad = models.IntegerField(
+        validators=[MinValueValidator(1)],
+        help_text="Cantidad de unidades recetadas"
+    )
+    dosis = models.CharField(
+        max_length=200,
+        help_text="Ej: 1 tableta cada 12 horas"
+    )
+    duracion_dias = models.IntegerField(
+        validators=[MinValueValidator(1)],
+        help_text="Duración del tratamiento en días"
+    )
+    indicaciones = models.TextField(
+        blank=True,
+        help_text="Indicaciones adicionales para el medicamento"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Receta de Medicamento'
+        verbose_name_plural = 'Recetas de Medicamentos'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.inventario.nombre} - {self.cantidad} unidades - {self.historial_medico.mascota.nombre}"

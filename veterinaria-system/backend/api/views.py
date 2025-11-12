@@ -15,14 +15,15 @@ import secrets
 import string
 from .models import (
     Rol, Usuario, Tutor, Mascota, Cita,
-    HistorialMedico, Inventario, MovimientoInventario
+    HistorialMedico, Inventario, MovimientoInventario, RecetaMedicamento
 )
 from .serializers import (
     RolSerializer, UsuarioSerializer, UsuarioListSerializer,
     TutorSerializer, TutorListSerializer, MascotaSerializer,
     MascotaListSerializer, CitaSerializer, HistorialMedicoSerializer,
-    InventarioSerializer, MovimientoInventarioSerializer,
-    MascotaHistorialCompletoSerializer
+    HistorialMedicoCreateSerializer, InventarioSerializer,
+    MovimientoInventarioSerializer, MascotaHistorialCompletoSerializer,
+    RecetaMedicamentoSerializer
 )
 
 
@@ -259,14 +260,92 @@ class HistorialMedicoViewSet(viewsets.ModelViewSet):
     - GET /api/historiales/{id}/
     - PUT /api/historiales/{id}/
     - DELETE /api/historiales/{id}/
+    - POST /api/historiales/crear_con_medicamentos/ (custom action)
     """
     queryset = HistorialMedico.objects.select_related(
         'mascota__tutor__usuario',
         'veterinario'
-    ).all()
+    ).prefetch_related('medicamentos_recetados__inventario').all()
     serializer_class = HistorialMedicoSerializer
     filterset_fields = ['mascota', 'veterinario', 'tipo', 'fecha']
     permission_classes = []  # Permitir acceso sin autenticación
+
+    @action(detail=False, methods=['post'])
+    def crear_con_medicamentos(self, request):
+        """
+        Crea un historial médico y receta medicamentos del inventario.
+        Registra automáticamente los movimientos de inventario.
+        POST /api/historiales/crear_con_medicamentos/
+        """
+        serializer = HistorialMedicoCreateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+
+        try:
+            # 1. Crear el historial médico
+            historial = HistorialMedico.objects.create(
+                mascota_id=data['mascota'],
+                veterinario_id=data['veterinario'],
+                fecha=data['fecha'],
+                tipo=data['tipo'],
+                diagnostico=data['diagnostico'],
+                tratamiento=data['tratamiento'],
+                peso_kg=data.get('peso_kg'),
+                temperatura_c=data.get('temperatura_c'),
+                observaciones=data.get('observaciones', ''),
+                proxima_visita=data.get('proxima_visita')
+            )
+
+            # 2. Crear las recetas de medicamentos y registrar movimientos
+            medicamentos_recetados = data.get('medicamentos_recetados', [])
+            for medicamento_data in medicamentos_recetados:
+                inventario = medicamento_data['inventario']
+
+                # Validar stock disponible
+                if inventario.cantidad < medicamento_data['cantidad']:
+                    historial.delete()  # Rollback del historial
+                    return Response(
+                        {
+                            'error': f'Stock insuficiente de {inventario.nombre}. '
+                                    f'Disponible: {inventario.cantidad}, Solicitado: {medicamento_data["cantidad"]}'
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # Crear la receta
+                RecetaMedicamento.objects.create(
+                    historial_medico=historial,
+                    inventario=inventario,
+                    cantidad=medicamento_data['cantidad'],
+                    dosis=medicamento_data['dosis'],
+                    duracion_dias=medicamento_data['duracion_dias'],
+                    indicaciones=medicamento_data.get('indicaciones', '')
+                )
+
+                # Registrar movimiento de inventario (salida)
+                MovimientoInventario.objects.create(
+                    inventario=inventario,
+                    usuario_id=data['veterinario'],
+                    tipo_movimiento='salida',
+                    cantidad=medicamento_data['cantidad'],
+                    motivo=f'Receta médica - {historial.mascota.nombre} - {historial.tipo}'
+                )
+
+                # Actualizar stock
+                inventario.cantidad -= medicamento_data['cantidad']
+                inventario.save()
+
+            # 3. Retornar el historial completo con medicamentos
+            historial_serializer = HistorialMedicoSerializer(historial)
+            return Response(historial_serializer.data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response(
+                {'error': f'Error al crear historial: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class InventarioViewSet(viewsets.ModelViewSet):
@@ -292,11 +371,26 @@ class InventarioViewSet(viewsets.ModelViewSet):
         Retorna productos con stock bajo o igual al mínimo.
         GET /api/inventario/bajo_stock/
         """
+        from django.db import models as django_models
         productos = self.queryset.filter(
-            cantidad__lte=models.F('stock_minimo'),
+            cantidad__lte=django_models.F('stock_minimo'),
             activo=True
         )
         serializer = self.get_serializer(productos, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def medicamentos(self, request):
+        """
+        Retorna solo los productos de categoría 'medicamento' con stock disponible.
+        GET /api/inventario/medicamentos/
+        """
+        medicamentos = self.queryset.filter(
+            categoria='medicamento',
+            activo=True,
+            cantidad__gt=0
+        ).order_by('nombre')
+        serializer = self.get_serializer(medicamentos, many=True)
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
