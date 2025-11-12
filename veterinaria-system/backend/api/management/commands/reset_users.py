@@ -4,7 +4,10 @@ Uso: python manage.py reset_users
 """
 from django.core.management.base import BaseCommand
 from django.contrib.auth.hashers import make_password
-from api.models import Usuario, Tutor, Rol
+from api.models import (
+    Usuario, Tutor, Rol, MovimientoInventario,
+    HistorialMedico, Cita, Mascota, Inventario
+)
 
 
 class Command(BaseCommand):
@@ -13,15 +16,42 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         self.stdout.write('=== Reseteando usuarios ===\n')
 
-        # 1. Eliminar todos los tutores (por dependencias)
-        tutores_count = Tutor.objects.count()
-        Tutor.objects.all().delete()
-        self.stdout.write(f'✓ Eliminados {tutores_count} tutores')
+        # Eliminar en orden de dependencias (de hijos a padres)
 
-        # 2. Eliminar todos los usuarios
-        usuarios_count = Usuario.objects.count()
+        # 1. MovimientoInventario (referencia a Usuario e Inventario)
+        count = MovimientoInventario.objects.count()
+        MovimientoInventario.objects.all().delete()
+        self.stdout.write(f'✓ Eliminados {count} movimientos de inventario')
+
+        # 2. Inventario (puede tener referencias)
+        count = Inventario.objects.count()
+        Inventario.objects.all().delete()
+        self.stdout.write(f'✓ Eliminados {count} productos de inventario')
+
+        # 3. HistorialMedico (referencia a Mascota y Usuario)
+        count = HistorialMedico.objects.count()
+        HistorialMedico.objects.all().delete()
+        self.stdout.write(f'✓ Eliminados {count} historiales médicos')
+
+        # 4. Cita (referencia a Mascota y Usuario)
+        count = Cita.objects.count()
+        Cita.objects.all().delete()
+        self.stdout.write(f'✓ Eliminadas {count} citas')
+
+        # 5. Mascota (referencia a Tutor)
+        count = Mascota.objects.count()
+        Mascota.objects.all().delete()
+        self.stdout.write(f'✓ Eliminadas {count} mascotas')
+
+        # 6. Tutor (referencia a Usuario)
+        count = Tutor.objects.count()
+        Tutor.objects.all().delete()
+        self.stdout.write(f'✓ Eliminados {count} tutores')
+
+        # 7. Usuario (raíz de la jerarquía)
+        count = Usuario.objects.count()
         Usuario.objects.all().delete()
-        self.stdout.write(f'✓ Eliminados {usuarios_count} usuarios')
+        self.stdout.write(f'✓ Eliminados {count} usuarios')
 
         # 3. Obtener los roles
         try:
@@ -86,11 +116,13 @@ class Command(BaseCommand):
         )
         self.stdout.write(f'✓ Creado tutor para: {usuario_tutor.email}')
 
-        # 6. Mostrar resumen
-        self.stdout.write('\n' + '='*50)
+        # 8. Mostrar resumen
+        self.stdout.write('\n' + '='*60)
         self.stdout.write(self.style.SUCCESS('✓ RESET COMPLETADO\n'))
+        self.stdout.write(self.style.WARNING('ATENCIÓN: Se eliminaron TODOS los datos del sistema'))
+        self.stdout.write('(movimientos, inventario, historiales, citas, mascotas)\n')
         self.stdout.write('Usuarios creados:')
         self.stdout.write('1. Administrador: admin@vet.com / admin123')
         self.stdout.write('2. Veterinario:   vet@vet.com / vet123')
         self.stdout.write('3. Tutor:         tutor@vet.com / tutor123')
-        self.stdout.write('='*50)
+        self.stdout.write('='*60)
