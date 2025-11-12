@@ -101,9 +101,9 @@ const Login = () => {
         <div className="test-users">
           <h3>Usuarios de Prueba:</h3>
           <ul>
-            <li><strong>Administrador:</strong> admin@veterinaria.com / admin123</li>
-            <li><strong>Veterinario:</strong> vet1@veterinaria.com / vet123</li>
-            <li><strong>Tutor:</strong> tutor1@gmail.com / tutor123</li>
+            <li><strong>Administrador:</strong> admin@vet.com / admin123</li>
+            <li><strong>Veterinario:</strong> vet@vet.com / vet123</li>
+            <li><strong>Tutor:</strong> tutor@vet.com / tutor123</li>
           </ul>
         </div>
       </div>

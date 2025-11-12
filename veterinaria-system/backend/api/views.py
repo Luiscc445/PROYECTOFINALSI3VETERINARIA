@@ -7,6 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.hashers import check_password
 from django.utils import timezone
 from django.db.models import Count, Q
 from datetime import timedelta
@@ -384,12 +385,8 @@ class LoginView(APIView):
             # Buscar el usuario por email
             usuario = Usuario.objects.select_related('rol').get(email=email, activo=True)
 
-            # Verificar la contraseña (comparación directa para este ejemplo)
-            # NOTA: En producción deberías usar Django's check_password
-            if usuario.password_hash == password:
-                # Crear sesión (opcional si usas SessionAuthentication)
-                # login(request, usuario)
-
+            # Verificar la contraseña usando Django's check_password
+            if check_password(password, usuario.password_hash):
                 # Serializar los datos del usuario
                 serializer = UsuarioSerializer(usuario)
                 return Response(serializer.data, status=status.HTTP_200_OK)
