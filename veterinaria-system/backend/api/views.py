@@ -54,6 +54,7 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.select_related('rol').all()
     serializer_class = UsuarioSerializer
     filterset_fields = ['rol', 'activo', 'email']
+    permission_classes = []  # Permitir acceso sin autenticación
 
     def get_serializer_class(self):
         """Retorna serializer simplificado para listar"""
@@ -86,6 +87,7 @@ class TutorViewSet(viewsets.ModelViewSet):
     queryset = Tutor.objects.select_related('usuario').all()
     serializer_class = TutorSerializer
     filterset_fields = ['ci']
+    permission_classes = []  # Permitir acceso sin autenticación
 
     def get_serializer_class(self):
         """Retorna serializer simplificado para listar"""
@@ -119,6 +121,7 @@ class MascotaViewSet(viewsets.ModelViewSet):
     queryset = Mascota.objects.select_related('tutor__usuario').all()
     serializer_class = MascotaSerializer
     filterset_fields = ['tutor', 'especie', 'sexo', 'activo']
+    permission_classes = []  # Permitir acceso sin autenticación
 
     def get_serializer_class(self):
         """Retorna serializer simplificado para listar"""
@@ -155,6 +158,7 @@ class CitaViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = CitaSerializer
     filterset_fields = ['mascota', 'veterinario', 'estado']
+    permission_classes = []  # Permitir acceso sin autenticación
 
     @action(detail=False, methods=['get'])
     def proximas(self, request):
@@ -210,6 +214,7 @@ class HistorialMedicoViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = HistorialMedicoSerializer
     filterset_fields = ['mascota', 'veterinario', 'tipo', 'fecha']
+    permission_classes = []  # Permitir acceso sin autenticación
 
 
 class InventarioViewSet(viewsets.ModelViewSet):
@@ -227,6 +232,7 @@ class InventarioViewSet(viewsets.ModelViewSet):
     queryset = Inventario.objects.all()
     serializer_class = InventarioSerializer
     filterset_fields = ['categoria', 'activo', 'codigo']
+    permission_classes = []  # Permitir acceso sin autenticación
 
     @action(detail=False, methods=['get'])
     def bajo_stock(self, request):
@@ -324,6 +330,7 @@ class MovimientoInventarioViewSet(viewsets.ReadOnlyModelViewSet):
     ).all()
     serializer_class = MovimientoInventarioSerializer
     filterset_fields = ['inventario', 'usuario', 'tipo_movimiento']
+    permission_classes = []  # Permitir acceso sin autenticación
 
 
 class DashboardViewSet(viewsets.ViewSet):
@@ -332,6 +339,7 @@ class DashboardViewSet(viewsets.ViewSet):
     Endpoints:
     - GET /api/dashboard/estadisticas/
     """
+    permission_classes = []  # Permitir acceso sin autenticación
 
     @action(detail=False, methods=['get'])
     def estadisticas(self, request):
