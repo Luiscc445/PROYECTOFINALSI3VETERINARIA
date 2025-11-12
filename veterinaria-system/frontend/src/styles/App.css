@@ -1,0 +1,65 @@
+/*
+ * Estilos principales de la aplicación
+ */
+
+.App {
+  min-height: 100vh;
+}
+
+/* Contenedor principal */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Secciones */
+.section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+
+.section h2 {
+  margin-bottom: 20px;
+  color: var(--dark-color);
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 10px;
+}
+
+/* Enlaces rápidos */
+.quick-links {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+/* Grid de estadísticas */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin: 30px 0;
+}
+
+/* Mensajes de error */
+.error-message {
+  background: #ffebee;
+  color: #D32F2F;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  border-left: 4px solid #D32F2F;
+}
+
+/* Mensajes de éxito */
+.success-message {
+  background: #e8f5e9;
+  color: #388E3C;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  border-left: 4px solid #388E3C;
+}

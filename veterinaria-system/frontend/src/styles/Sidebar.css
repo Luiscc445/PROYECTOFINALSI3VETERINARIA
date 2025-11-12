@@ -1,0 +1,76 @@
+/*
+ * Estilos del Sidebar
+ */
+
+.sidebar {
+  width: 250px;
+  background: var(--dark-color);
+  color: white;
+  min-height: calc(100vh - 60px);
+  transition: var(--transition);
+}
+
+.sidebar-content {
+  padding: 20px 0;
+}
+
+.sidebar-menu {
+  list-style: none;
+}
+
+.sidebar-item {
+  margin-bottom: 5px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px 25px;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: var(--transition);
+  border-left: 3px solid transparent;
+}
+
+.sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.sidebar-link.active {
+  background: rgba(33, 150, 243, 0.2);
+  color: white;
+  border-left-color: var(--primary-color);
+}
+
+.sidebar-icon {
+  font-size: 1.3rem;
+}
+
+.sidebar-text {
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    min-height: auto;
+  }
+
+  .sidebar-menu {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .sidebar-item {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  .sidebar-link {
+    justify-content: center;
+    padding: 12px;
+  }
+}

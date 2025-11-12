@@ -1,0 +1,38 @@
+/**
+ * VeterinarioDashboard - Dashboard del veterinario
+ */
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
+import VetHome from '../components/veterinario/VetHome';
+import GestionCitas from '../components/veterinario/GestionCitas';
+import HistorialesMedicos from '../components/veterinario/HistorialesMedicos';
+import '../styles/Dashboard.css';
+
+const VeterinarioDashboard = () => {
+  const sidebarLinks = [
+    { path: '/veterinario', label: 'Inicio', icon: '🏠', end: true },
+    { path: '/veterinario/citas', label: 'Citas', icon: '📅' },
+    { path: '/veterinario/historiales', label: 'Historiales', icon: '📋' },
+  ];
+
+  return (
+    <div className="dashboard-container">
+      <Navbar title="Panel Veterinario" />
+      <div className="dashboard-content">
+        <Sidebar links={sidebarLinks} />
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<VetHome />} />
+            <Route path="/citas" element={<GestionCitas />} />
+            <Route path="/historiales" element={<HistorialesMedicos />} />
+            <Route path="*" element={<Navigate to="/veterinario" replace />} />
+          </Routes>
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default VeterinarioDashboard;

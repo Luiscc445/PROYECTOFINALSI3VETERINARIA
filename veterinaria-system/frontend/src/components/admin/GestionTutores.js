@@ -1,0 +1,87 @@
+/**
+ * GestionTutores - Gestión de tutores (dueños de mascotas)
+ */
+import React, { useState, useEffect } from 'react';
+import { tutoresAPI } from '../../services/api';
+import '../../styles/Tables.css';
+
+const GestionTutores = () => {
+  const [tutores, setTutores] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    cargarTutores();
+  }, []);
+
+  const cargarTutores = async () => {
+    try {
+      const response = await tutoresAPI.getAll();
+      setTutores(response.data.results || response.data);
+    } catch (error) {
+      console.error('Error cargando tutores:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verMascotas = async (id) => {
+    try {
+      const response = await tutoresAPI.getMascotas(id);
+      const mascotas = response.data;
+      alert(`Mascotas: ${mascotas.map(m => m.nombre).join(', ') || 'Sin mascotas'}`);
+    } catch (error) {
+      console.error('Error cargando mascotas:', error);
+    }
+  };
+
+  if (loading) {
+    return <div className="loading">Cargando tutores...</div>;
+  }
+
+  return (
+    <div className="gestion-container">
+      <div className="gestion-header">
+        <h1>Gestión de Tutores</h1>
+      </div>
+
+      <div className="table-container">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Teléfono</th>
+              <th>CI</th>
+              <th>Dirección</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tutores.map((tutor) => (
+              <tr key={tutor.id}>
+                <td>{tutor.id}</td>
+                <td>{tutor.nombre_completo}</td>
+                <td>{tutor.email}</td>
+                <td>{tutor.telefono || '-'}</td>
+                <td>{tutor.ci}</td>
+                <td>{tutor.direccion}</td>
+                <td>
+                  <button
+                    className="btn-icon"
+                    onClick={() => verMascotas(tutor.id)}
+                    title="Ver mascotas"
+                  >
+                    🐕
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default GestionTutores;
