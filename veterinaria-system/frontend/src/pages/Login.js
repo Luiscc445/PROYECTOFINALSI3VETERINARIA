@@ -57,14 +57,25 @@ const Login = () => {
       }
     } catch (err) {
       // Manejar errores de autenticación
-      if (err.response && err.response.data && err.response.data.error) {
-        setError(err.response.data.error);
-      } else if (err.response && err.response.status === 401) {
-        setError('Credenciales inválidas');
+      console.error('Error completo:', err);
+      console.error('Response:', err.response);
+
+      if (err.response) {
+        // El servidor respondió con un código de error
+        if (err.response.data && err.response.data.error) {
+          setError(err.response.data.error);
+        } else if (err.response.status === 401) {
+          setError('Credenciales inválidas');
+        } else {
+          setError(`Error del servidor (${err.response.status}): ${JSON.stringify(err.response.data)}`);
+        }
+      } else if (err.request) {
+        // La petición se hizo pero no hubo respuesta
+        setError('No se pudo conectar con el servidor. ¿Está el backend corriendo en http://localhost:8000?');
       } else {
-        setError('Error al iniciar sesión. Por favor, intente nuevamente.');
+        // Algo pasó al configurar la petición
+        setError(`Error: ${err.message}`);
       }
-      console.error('Error de login:', err);
     } finally {
       setLoading(false);
     }
