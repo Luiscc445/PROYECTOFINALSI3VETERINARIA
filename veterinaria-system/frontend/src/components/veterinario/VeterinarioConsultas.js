@@ -15,6 +15,8 @@ const VeterinarioConsultas = () => {
   const [medicamentosDisponibles, setMedicamentosDisponibles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [historialId, setHistorialId] = useState(null);
   const [toast, setToast] = useState(null);
 
   const [formHistorial, setFormHistorial] = useState({
@@ -144,13 +146,17 @@ const VeterinarioConsultas = () => {
         })),
       };
 
-      await historialesAPI.crearConMedicamentos(data);
+      const response = await historialesAPI.crearConMedicamentos(data);
 
       // Cambiar estado de la cita a completada
       await citasAPI.cambiarEstado(citaSeleccionada.id, 'completada');
 
+      // Guardar ID del historial para descargar PDF
+      setHistorialId(response.data.historial_id || response.data.id);
+
       showToast('✓ Historial médico creado exitosamente', 'success');
       cerrarModal();
+      setShowSuccessModal(true); // Mostrar modal de éxito con opción de PDF
       cargarCitas();
       cargarMedicamentos(); // Recargar para actualizar stocks
     } catch (error) {
@@ -166,6 +172,26 @@ const VeterinarioConsultas = () => {
     setShowModal(false);
     setCitaSeleccionada(null);
     setMascota(null);
+  };
+
+  const descargarPDF = async () => {
+    try {
+      const response = await historialesAPI.descargarRecetaPDF(historialId);
+
+      // Crear un enlace temporal para descargar el PDF
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `receta_${mascota?.nombre || 'mascota'}_${new Date().toISOString().split('T')[0]}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      showToast('✓ PDF descargado exitosamente', 'success');
+    } catch (error) {
+      console.error('Error descargando PDF:', error);
+      showToast('✕ Error al descargar PDF', 'error');
+    }
   };
 
   if (loading) {
@@ -471,6 +497,41 @@ const VeterinarioConsultas = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showSuccessModal && (
+        <div className="modal-overlay" onClick={() => setShowSuccessModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', textAlign: 'center' }}>
+            <div style={{ padding: '30px' }}>
+              <div style={{ fontSize: '64px', marginBottom: '20px' }}>✅</div>
+              <h2 style={{ color: '#4CAF50', marginBottom: '15px' }}>¡Consulta Guardada Exitosamente!</h2>
+              <p style={{ color: '#666', marginBottom: '30px' }}>
+                El historial médico y la receta han sido registrados correctamente.
+              </p>
+
+              <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button
+                  className="btn btn-primary"
+                  onClick={descargarPDF}
+                  style={{ fontSize: '16px', padding: '12px 24px' }}
+                >
+                  📄 Descargar Receta (PDF)
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowSuccessModal(false)}
+                  style={{ fontSize: '16px', padding: '12px 24px' }}
+                >
+                  Cerrar
+                </button>
+              </div>
+
+              <p style={{ marginTop: '20px', fontSize: '12px', color: '#999' }}>
+                💡 El PDF incluye toda la información de la consulta y será entregado al tutor
+              </p>
+            </div>
           </div>
         </div>
       )}

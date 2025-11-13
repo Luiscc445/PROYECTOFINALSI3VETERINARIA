@@ -191,8 +191,12 @@ class HistorialMedicoCreateSerializer(serializers.Serializer):
     observaciones = serializers.CharField(required=False, allow_blank=True)
     proxima_visita = serializers.DateField(required=False, allow_null=True)
 
-    # Lista de medicamentos
-    medicamentos_recetados = RecetaMedicamentoCreateSerializer(many=True, required=False)
+    # Lista de medicamentos - debe ser una lista de diccionarios
+    medicamentos_recetados = serializers.ListField(
+        child=serializers.DictField(),
+        required=False,
+        allow_empty=True
+    )
 
 
 class InventarioSerializer(serializers.ModelSerializer):

@@ -10,9 +10,17 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.hashers import check_password, make_password
 from django.utils import timezone
 from django.db.models import Count, Q
-from datetime import timedelta
+from django.http import HttpResponse
+from datetime import timedelta, date
 import secrets
 import string
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from .models import (
     Rol, Usuario, Tutor, Mascota, Cita,
     HistorialMedico, Inventario, MovimientoInventario, RecetaMedicamento
@@ -301,15 +309,25 @@ class HistorialMedicoViewSet(viewsets.ModelViewSet):
             # 2. Crear las recetas de medicamentos y registrar movimientos
             medicamentos_recetados = data.get('medicamentos_recetados', [])
             for medicamento_data in medicamentos_recetados:
-                inventario = medicamento_data['inventario']
+                # Obtener el objeto Inventario desde el ID
+                inventario_id = medicamento_data.get('inventario')
+                try:
+                    inventario = Inventario.objects.get(id=inventario_id)
+                except Inventario.DoesNotExist:
+                    historial.delete()  # Rollback del historial
+                    return Response(
+                        {'error': f'Medicamento con ID {inventario_id} no encontrado'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
                 # Validar stock disponible
-                if inventario.cantidad < medicamento_data['cantidad']:
+                cantidad_solicitada = int(medicamento_data['cantidad'])
+                if inventario.cantidad < cantidad_solicitada:
                     historial.delete()  # Rollback del historial
                     return Response(
                         {
                             'error': f'Stock insuficiente de {inventario.nombre}. '
-                                    f'Disponible: {inventario.cantidad}, Solicitado: {medicamento_data["cantidad"]}'
+                                    f'Disponible: {inventario.cantidad}, Solicitado: {cantidad_solicitada}'
                         },
                         status=status.HTTP_400_BAD_REQUEST
                     )
@@ -318,9 +336,9 @@ class HistorialMedicoViewSet(viewsets.ModelViewSet):
                 RecetaMedicamento.objects.create(
                     historial_medico=historial,
                     inventario=inventario,
-                    cantidad=medicamento_data['cantidad'],
+                    cantidad=cantidad_solicitada,
                     dosis=medicamento_data['dosis'],
-                    duracion_dias=medicamento_data['duracion_dias'],
+                    duracion_dias=int(medicamento_data['duracion_dias']),
                     indicaciones=medicamento_data.get('indicaciones', '')
                 )
 
@@ -329,21 +347,223 @@ class HistorialMedicoViewSet(viewsets.ModelViewSet):
                     inventario=inventario,
                     usuario_id=data['veterinario'],
                     tipo_movimiento='salida',
-                    cantidad=medicamento_data['cantidad'],
+                    cantidad=cantidad_solicitada,
                     motivo=f'Receta médica - {historial.mascota.nombre} - {historial.tipo}'
                 )
 
                 # Actualizar stock
-                inventario.cantidad -= medicamento_data['cantidad']
+                inventario.cantidad -= cantidad_solicitada
                 inventario.save()
 
             # 3. Retornar el historial completo con medicamentos
             historial_serializer = HistorialMedicoSerializer(historial)
-            return Response(historial_serializer.data, status=status.HTTP_201_CREATED)
+            response_data = historial_serializer.data
+            response_data['historial_id'] = historial.id
+            return Response(response_data, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             return Response(
                 {'error': f'Error al crear historial: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['get'])
+    def generar_receta_pdf(self, request, pk=None):
+        """
+        Genera un PDF de la receta médica.
+        GET /api/historiales/{id}/generar_receta_pdf/
+        """
+        try:
+            historial = self.get_object()
+            mascota = historial.mascota
+            tutor = mascota.tutor
+            veterinario = historial.veterinario
+            medicamentos = historial.medicamentos_recetados.all()
+
+            # Crear el PDF en memoria
+            buffer = BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+            story = []
+            styles = getSampleStyleSheet()
+
+            # Estilos personalizados
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=24,
+                textColor=colors.HexColor('#2196F3'),
+                spaceAfter=20,
+                alignment=TA_CENTER,
+                fontName='Helvetica-Bold'
+            )
+
+            subtitle_style = ParagraphStyle(
+                'CustomSubtitle',
+                parent=styles['Heading2'],
+                fontSize=14,
+                textColor=colors.HexColor('#1976D2'),
+                spaceAfter=12,
+                spaceBefore=12,
+                fontName='Helvetica-Bold'
+            )
+
+            normal_style = ParagraphStyle(
+                'CustomNormal',
+                parent=styles['Normal'],
+                fontSize=11,
+                spaceAfter=6
+            )
+
+            # Título principal
+            story.append(Paragraph("🩺 RECETA MÉDICA VETERINARIA", title_style))
+            story.append(Spacer(1, 0.2*inch))
+
+            # Información del veterinario
+            story.append(Paragraph("Datos del Veterinario", subtitle_style))
+            vet_data = [
+                ['Veterinario:', veterinario.nombre_completo],
+                ['Email:', veterinario.email],
+                ['Teléfono:', veterinario.telefono or 'N/A'],
+                ['Fecha de Consulta:', historial.fecha.strftime('%d/%m/%Y')],
+            ]
+            vet_table = Table(vet_data, colWidths=[2*inch, 4*inch])
+            vet_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#E3F2FD')),
+                ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+                ('TOPPADDING', (0, 0), (-1, -1), 8),
+                ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+            ]))
+            story.append(vet_table)
+            story.append(Spacer(1, 0.3*inch))
+
+            # Información del paciente
+            story.append(Paragraph("Datos del Paciente", subtitle_style))
+            patient_data = [
+                ['Mascota:', f"{mascota.nombre} ({mascota.especie})"],
+                ['Raza:', mascota.raza],
+                ['Edad:', f"{mascota.edad_anos} años"],
+                ['Sexo:', mascota.sexo],
+                ['Tutor:', tutor.usuario.nombre_completo],
+                ['CI Tutor:', tutor.ci],
+                ['Teléfono Tutor:', tutor.usuario.telefono or 'N/A'],
+            ]
+            patient_table = Table(patient_data, colWidths=[2*inch, 4*inch])
+            patient_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#E8F5E9')),
+                ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+                ('TOPPADDING', (0, 0), (-1, -1), 8),
+                ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+            ]))
+            story.append(patient_table)
+            story.append(Spacer(1, 0.3*inch))
+
+            # Signos vitales (si existen)
+            if historial.peso_kg or historial.temperatura_c:
+                story.append(Paragraph("Signos Vitales", subtitle_style))
+                vitals_data = []
+                if historial.peso_kg:
+                    vitals_data.append(['Peso:', f"{historial.peso_kg} kg"])
+                if historial.temperatura_c:
+                    vitals_data.append(['Temperatura:', f"{historial.temperatura_c} °C"])
+
+                vitals_table = Table(vitals_data, colWidths=[2*inch, 4*inch])
+                vitals_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#FFF4E5')),
+                    ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                    ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, -1), 10),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+                    ('TOPPADDING', (0, 0), (-1, -1), 8),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+                ]))
+                story.append(vitals_table)
+                story.append(Spacer(1, 0.3*inch))
+
+            # Diagnóstico y Tratamiento
+            story.append(Paragraph("Diagnóstico", subtitle_style))
+            story.append(Paragraph(historial.diagnostico, normal_style))
+            story.append(Spacer(1, 0.2*inch))
+
+            story.append(Paragraph("Tratamiento Recomendado", subtitle_style))
+            story.append(Paragraph(historial.tratamiento, normal_style))
+            story.append(Spacer(1, 0.3*inch))
+
+            # Medicamentos recetados
+            if medicamentos.exists():
+                story.append(Paragraph("💊 Medicamentos Recetados", subtitle_style))
+
+                med_data = [['Medicamento', 'Cantidad', 'Dosis', 'Duración', 'Indicaciones']]
+                for med in medicamentos:
+                    med_data.append([
+                        med.inventario.nombre,
+                        f"{med.cantidad} {med.inventario.unidad_medida}",
+                        med.dosis,
+                        f"{med.duracion_dias} días",
+                        med.indicaciones if med.indicaciones else 'N/A'
+                    ])
+
+                med_table = Table(med_data, colWidths=[1.8*inch, 1*inch, 1.5*inch, 0.8*inch, 1.4*inch])
+                med_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4CAF50')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 11),
+                    ('FONTSIZE', (0, 1), (-1, -1), 9),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+                    ('TOPPADDING', (0, 0), (-1, -1), 8),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+                    ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F5F5F5')]),
+                ]))
+                story.append(med_table)
+                story.append(Spacer(1, 0.3*inch))
+
+            # Observaciones
+            if historial.observaciones:
+                story.append(Paragraph("Observaciones", subtitle_style))
+                story.append(Paragraph(historial.observaciones, normal_style))
+                story.append(Spacer(1, 0.2*inch))
+
+            # Próxima visita
+            if historial.proxima_visita:
+                story.append(Paragraph("Próxima Visita Programada", subtitle_style))
+                story.append(Paragraph(
+                    f"<b>{historial.proxima_visita.strftime('%d/%m/%Y')}</b>",
+                    normal_style
+                ))
+                story.append(Spacer(1, 0.3*inch))
+
+            # Pie de página con firma
+            story.append(Spacer(1, 0.5*inch))
+            story.append(Paragraph("_" * 50, normal_style))
+            story.append(Paragraph(
+                f"<b>{veterinario.nombre_completo}</b><br/>Médico Veterinario",
+                ParagraphStyle('Signature', parent=styles['Normal'], fontSize=10, alignment=TA_CENTER)
+            ))
+
+            # Generar PDF
+            doc.build(story)
+            buffer.seek(0)
+
+            # Crear respuesta HTTP con el PDF
+            response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+            filename = f"receta_{mascota.nombre}_{historial.fecha.strftime('%Y%m%d')}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+            return response
+
+        except Exception as e:
+            return Response(
+                {'error': f'Error al generar PDF: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

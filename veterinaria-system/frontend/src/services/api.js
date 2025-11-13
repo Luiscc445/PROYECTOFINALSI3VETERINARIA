@@ -133,6 +133,7 @@ export const historialesAPI = {
   crearConMedicamentos: (data) => api.post('/historiales/crear_con_medicamentos/', data),
   update: (id, data) => api.put(`/historiales/${id}/`, data),
   delete: (id) => api.delete(`/historiales/${id}/`),
+  descargarRecetaPDF: (id) => api.get(`/historiales/${id}/generar_receta_pdf/`, { responseType: 'blob' }),
 };
 
 // ============================================
