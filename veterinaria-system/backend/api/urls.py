@@ -7,7 +7,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     RolViewSet, UsuarioViewSet, TutorViewSet, MascotaViewSet,
     CitaViewSet, HistorialMedicoViewSet, InventarioViewSet,
-    MovimientoInventarioViewSet, DashboardViewSet
+    MovimientoInventarioViewSet, RecetaMedicamentoViewSet, DashboardViewSet
 )
 
 # Crear router para registrar los ViewSets
@@ -20,6 +20,7 @@ router.register(r'citas', CitaViewSet, basename='cita')
 router.register(r'historiales', HistorialMedicoViewSet, basename='historial')
 router.register(r'inventario', InventarioViewSet, basename='inventario')
 router.register(r'movimientos', MovimientoInventarioViewSet, basename='movimiento')
+router.register(r'recetas', RecetaMedicamentoViewSet, basename='receta')
 router.register(r'dashboard', DashboardViewSet, basename='dashboard')
 
 urlpatterns = [

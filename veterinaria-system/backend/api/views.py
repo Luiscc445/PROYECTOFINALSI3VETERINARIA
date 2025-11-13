@@ -1,6 +1,6 @@
 """
 ViewSets para la API REST del sistema veterinaria.
-Incluye más de 40 endpoints para gestión completa.
+Incluye más de 45 endpoints para gestión completa.
 """
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -10,14 +10,14 @@ from django.db.models import Count, Q
 from datetime import timedelta
 from .models import (
     Rol, Usuario, Tutor, Mascota, Cita,
-    HistorialMedico, Inventario, MovimientoInventario
+    HistorialMedico, Inventario, MovimientoInventario, RecetaMedicamento
 )
 from .serializers import (
     RolSerializer, UsuarioSerializer, UsuarioListSerializer,
     TutorSerializer, TutorListSerializer, MascotaSerializer,
     MascotaListSerializer, CitaSerializer, HistorialMedicoSerializer,
     InventarioSerializer, MovimientoInventarioSerializer,
-    MascotaHistorialCompletoSerializer
+    MascotaHistorialCompletoSerializer, RecetaMedicamentoSerializer
 )
 
 
@@ -320,6 +320,35 @@ class MovimientoInventarioViewSet(viewsets.ReadOnlyModelViewSet):
     ).all()
     serializer_class = MovimientoInventarioSerializer
     filterset_fields = ['inventario', 'usuario', 'tipo_movimiento']
+
+
+class RecetaMedicamentoViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestionar recetas de medicamentos.
+    Endpoints:
+    - GET /api/recetas/
+    - POST /api/recetas/
+    - GET /api/recetas/{id}/
+    - PUT /api/recetas/{id}/
+    - DELETE /api/recetas/{id}/
+    - GET /api/recetas/por_historial/{historial_id}/ (custom action)
+    """
+    queryset = RecetaMedicamento.objects.select_related(
+        'historial_medico__mascota',
+        'medicamento'
+    ).all()
+    serializer_class = RecetaMedicamentoSerializer
+    filterset_fields = ['historial_medico', 'medicamento']
+
+    @action(detail=False, methods=['get'], url_path='por_historial/(?P<historial_id>[^/.]+)')
+    def por_historial(self, request, historial_id=None):
+        """
+        Retorna todas las recetas de un historial médico específico.
+        GET /api/recetas/por_historial/{historial_id}/
+        """
+        recetas = self.queryset.filter(historial_medico_id=historial_id)
+        serializer = self.get_serializer(recetas, many=True)
+        return Response(serializer.data)
 
 
 class DashboardViewSet(viewsets.ViewSet):
