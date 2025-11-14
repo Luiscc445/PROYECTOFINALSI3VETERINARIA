@@ -483,6 +483,10 @@ class LoginView(APIView):
                 request.session['user_email'] = usuario.email
                 request.session['user_rol'] = usuario.rol.nombre if usuario.rol else None
 
+                # Forzar guardado de sesión
+                request.session.modified = True
+                request.session.save()
+
                 # Preparar datos del usuario para respuesta
                 user_data = {
                     'id': usuario.id,
