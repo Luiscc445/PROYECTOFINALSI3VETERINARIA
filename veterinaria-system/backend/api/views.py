@@ -449,6 +449,7 @@ from django.db import models
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
+import bcrypt
 
 
 class LoginView(APIView):
@@ -472,12 +473,12 @@ class LoginView(APIView):
             # Buscar el usuario por email
             usuario = Usuario.objects.select_related('rol').get(email=email)
 
-            # Verificar la contraseña manualmente
-            # (Asumiendo que las contraseñas están en texto plano - NO SEGURO)
-            if usuario.password_hash == password:
+            # Verificar la contraseña con bcrypt
+            password_bytes = password.encode('utf-8')
+            hash_bytes = usuario.password_hash.encode('utf-8')
+
+            if bcrypt.checkpw(password_bytes, hash_bytes):
                 # Autenticar y crear sesión
-                # Nota: Django espera un objeto User, pero estamos usando Usuario custom
-                # Por ahora, creamos la sesión manualmente
                 request.session['user_id'] = usuario.id
                 request.session['user_email'] = usuario.email
                 request.session['user_rol'] = usuario.rol.nombre if usuario.rol else None
