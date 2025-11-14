@@ -441,3 +441,84 @@ class DashboardViewSet(viewsets.ViewSet):
 
 # Necesario importar models para usar F()
 from django.db import models
+
+
+# ============================================
+# AUTHENTICATION VIEWS
+# ============================================
+from django.contrib.auth import authenticate, login, logout
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
+
+
+class LoginView(APIView):
+    """
+    Vista para autenticación de usuarios.
+    Endpoint: POST /api/auth/login/
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+
+        if not email or not password:
+            return Response(
+                {'error': 'Email y contraseña son requeridos'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Buscar el usuario por email
+            usuario = Usuario.objects.select_related('rol').get(email=email)
+
+            # Verificar la contraseña manualmente
+            # (Asumiendo que las contraseñas están en texto plano - NO SEGURO)
+            if usuario.password == password:
+                # Autenticar y crear sesión
+                # Nota: Django espera un objeto User, pero estamos usando Usuario custom
+                # Por ahora, creamos la sesión manualmente
+                request.session['user_id'] = usuario.id
+                request.session['user_email'] = usuario.email
+                request.session['user_rol'] = usuario.rol.nombre if usuario.rol else None
+
+                # Preparar datos del usuario para respuesta
+                user_data = {
+                    'id': usuario.id,
+                    'email': usuario.email,
+                    'nombre': usuario.nombre,
+                    'apellido': usuario.apellido,
+                    'rol': usuario.rol.nombre if usuario.rol else None,
+                    'especialidad': usuario.get_especialidad_display() if usuario.especialidad else None,
+                }
+
+                return Response({
+                    'message': 'Login exitoso',
+                    'user': user_data
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {'error': 'Credenciales inválidas'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+
+        except Usuario.DoesNotExist:
+            return Response(
+                {'error': 'Credenciales inválidas'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+
+class LogoutView(APIView):
+    """
+    Vista para cerrar sesión.
+    Endpoint: POST /api/auth/logout/
+    """
+    def post(self, request):
+        # Limpiar la sesión
+        request.session.flush()
+
+        return Response(
+            {'message': 'Logout exitoso'},
+            status=status.HTTP_200_OK
+        )

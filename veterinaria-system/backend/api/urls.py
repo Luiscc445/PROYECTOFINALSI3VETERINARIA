@@ -7,7 +7,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     RolViewSet, UsuarioViewSet, TutorViewSet, MascotaViewSet,
     CitaViewSet, HistorialMedicoViewSet, InventarioViewSet,
-    MovimientoInventarioViewSet, RecetaMedicamentoViewSet, DashboardViewSet
+    MovimientoInventarioViewSet, RecetaMedicamentoViewSet, DashboardViewSet,
+    LoginView, LogoutView
 )
 
 # Crear router para registrar los ViewSets
@@ -25,4 +26,7 @@ router.register(r'dashboard', DashboardViewSet, basename='dashboard')
 
 urlpatterns = [
     path('', include(router.urls)),
+    # Authentication endpoints
+    path('auth/login/', LoginView.as_view(), name='login'),
+    path('auth/logout/', LogoutView.as_view(), name='logout'),
 ]
