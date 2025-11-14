@@ -1,13 +1,13 @@
 /**
  * MisMascotas - Vista de las mascotas del tutor con capacidad de registro
  */
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { mascotasAPI, tutoresAPI } from '../../services/api';
-import { AuthContext } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import '../../styles/Tables.css';
 
 const MisMascotas = () => {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [mascotas, setMascotas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mascotaDetalle, setMascotaDetalle] = useState(null);

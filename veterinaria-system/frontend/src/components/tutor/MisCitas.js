@@ -1,15 +1,15 @@
 /**
  * MisCitas - Vista de citas del tutor con capacidad de reserva
  */
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { citasAPI, mascotasAPI, usuariosAPI, tutoresAPI } from '../../services/api';
-import { AuthContext } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import '../../styles/Tables.css';
 
 const MisCitas = () => {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [citas, setCitas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showFormulario, setShowFormulario] = useState(false);
