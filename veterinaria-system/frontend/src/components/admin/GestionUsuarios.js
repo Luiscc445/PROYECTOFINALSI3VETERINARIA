@@ -12,7 +12,7 @@ const GestionUsuarios = () => {
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
-    password_hash: '',
+    password: '',
     nombre_completo: '',
     telefono: '',
     rol: '',
@@ -77,7 +77,7 @@ const GestionUsuarios = () => {
     if (usuario) {
       setFormData({
         email: usuario.email,
-        password_hash: '',
+        password: '',
         nombre_completo: usuario.nombre_completo,
         telefono: usuario.telefono || '',
         rol: usuario.rol,
@@ -87,7 +87,7 @@ const GestionUsuarios = () => {
     } else {
       setFormData({
         email: '',
-        password_hash: '',
+        password: '',
         nombre_completo: '',
         telefono: '',
         rol: '',
@@ -190,8 +190,8 @@ const GestionUsuarios = () => {
                 <label>Contraseña {!editingId && '*'}</label>
                 <input
                   type="password"
-                  value={formData.password_hash}
-                  onChange={(e) => setFormData({ ...formData, password_hash: e.target.value })}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required={!editingId}
                   placeholder={editingId ? 'Dejar en blanco para no cambiar' : ''}
                 />
