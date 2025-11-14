@@ -311,6 +311,174 @@ def create_mascotas(tutores):
     return mascotas
 
 
+def create_inventario(usuarios):
+    """Crea productos de inventario (medicamentos, alimentos, etc.)"""
+    print_step("Creando inventario...")
+
+    admin = usuarios['admin']
+    inventario = []
+
+    # MEDICAMENTOS
+    medicamentos = [
+        {
+            'codigo': 'MED-001',
+            'nombre': 'Amoxicilina 500mg',
+            'categoria': 'medicamento',
+            'descripcion': 'Antibiótico de amplio espectro',
+            'cantidad': 150,
+            'unidad_medida': 'comprimidos',
+            'precio_unitario': Decimal('0.50'),
+            'stock_minimo': 50
+        },
+        {
+            'codigo': 'MED-002',
+            'nombre': 'Ibuprofeno 400mg',
+            'categoria': 'medicamento',
+            'descripcion': 'Antiinflamatorio no esteroideo',
+            'cantidad': 200,
+            'unidad_medida': 'comprimidos',
+            'precio_unitario': Decimal('0.35'),
+            'stock_minimo': 60
+        },
+        {
+            'codigo': 'MED-003',
+            'nombre': 'Dipirona Inyectable',
+            'categoria': 'medicamento',
+            'descripcion': 'Analgésico y antipirético',
+            'cantidad': 80,
+            'unidad_medida': 'ampolletas',
+            'precio_unitario': Decimal('1.20'),
+            'stock_minimo': 30
+        },
+        {
+            'codigo': 'MED-004',
+            'nombre': 'Antiparasitario Canino',
+            'categoria': 'medicamento',
+            'descripcion': 'Tratamiento contra parásitos internos',
+            'cantidad': 120,
+            'unidad_medida': 'comprimidos',
+            'precio_unitario': Decimal('2.50'),
+            'stock_minimo': 40
+        },
+        {
+            'codigo': 'MED-005',
+            'nombre': 'Antiparasitario Felino',
+            'categoria': 'medicamento',
+            'descripcion': 'Tratamiento contra parásitos internos para gatos',
+            'cantidad': 100,
+            'unidad_medida': 'comprimidos',
+            'precio_unitario': Decimal('2.80'),
+            'stock_minimo': 35
+        },
+        {
+            'codigo': 'MED-006',
+            'nombre': 'Vitamina B Complex',
+            'categoria': 'medicamento',
+            'descripcion': 'Complejo vitamínico inyectable',
+            'cantidad': 60,
+            'unidad_medida': 'frascos',
+            'precio_unitario': Decimal('8.50'),
+            'stock_minimo': 20
+        },
+        {
+            'codigo': 'MED-007',
+            'nombre': 'Suero Fisiológico 500ml',
+            'categoria': 'medicamento',
+            'descripcion': 'Solución salina para hidratación',
+            'cantidad': 90,
+            'unidad_medida': 'bolsas',
+            'precio_unitario': Decimal('3.20'),
+            'stock_minimo': 30
+        },
+        {
+            'codigo': 'MED-008',
+            'nombre': 'Dexametasona Inyectable',
+            'categoria': 'medicamento',
+            'descripcion': 'Corticosteroide antiinflamatorio',
+            'cantidad': 75,
+            'unidad_medida': 'ampolletas',
+            'precio_unitario': Decimal('1.80'),
+            'stock_minimo': 25
+        },
+    ]
+
+    for med in medicamentos:
+        item = Inventario.objects.create(**med)
+        inventario.append(item)
+        print_success(f"✓ Medicamento: {item.nombre} - Stock: {item.cantidad} {item.unidad_medida}")
+
+    # ALIMENTOS
+    alimentos = [
+        {
+            'codigo': 'ALI-001',
+            'nombre': 'Alimento Perro Adulto Premium 15kg',
+            'categoria': 'alimento',
+            'descripcion': 'Alimento balanceado para perros adultos',
+            'cantidad': 45,
+            'unidad_medida': 'sacos',
+            'precio_unitario': Decimal('35.00'),
+            'stock_minimo': 15
+        },
+        {
+            'codigo': 'ALI-002',
+            'nombre': 'Alimento Gato Adulto Premium 10kg',
+            'categoria': 'alimento',
+            'descripcion': 'Alimento balanceado para gatos adultos',
+            'cantidad': 40,
+            'unidad_medida': 'sacos',
+            'precio_unitario': Decimal('30.00'),
+            'stock_minimo': 12
+        },
+        {
+            'codigo': 'ALI-003',
+            'nombre': 'Alimento Cachorro 10kg',
+            'categoria': 'alimento',
+            'descripcion': 'Alimento especial para cachorros',
+            'cantidad': 35,
+            'unidad_medida': 'sacos',
+            'precio_unitario': Decimal('38.00'),
+            'stock_minimo': 10
+        },
+    ]
+
+    for ali in alimentos:
+        item = Inventario.objects.create(**ali)
+        inventario.append(item)
+        print_success(f"✓ Alimento: {item.nombre} - Stock: {item.cantidad} {item.unidad_medida}")
+
+    # ACCESORIOS
+    accesorios = [
+        {
+            'codigo': 'ACC-001',
+            'nombre': 'Collar Antipulgas',
+            'categoria': 'accesorio',
+            'descripcion': 'Collar con repelente de pulgas y garrapatas',
+            'cantidad': 65,
+            'unidad_medida': 'unidades',
+            'precio_unitario': Decimal('12.50'),
+            'stock_minimo': 20
+        },
+        {
+            'codigo': 'ACC-002',
+            'nombre': 'Correa Retráctil',
+            'categoria': 'accesorio',
+            'descripcion': 'Correa retráctil hasta 5 metros',
+            'cantidad': 30,
+            'unidad_medida': 'unidades',
+            'precio_unitario': Decimal('18.00'),
+            'stock_minimo': 10
+        },
+    ]
+
+    for acc in accesorios:
+        item = Inventario.objects.create(**acc)
+        inventario.append(item)
+        print_success(f"✓ Accesorio: {item.nombre} - Stock: {item.cantidad} {item.unidad_medida}")
+
+    print_success(f"\nTotal de items en inventario: {len(inventario)}")
+    return inventario
+
+
 def verify_passwords(usuarios):
     """Verifica que las contraseñas funcionen"""
     print_step("Verificando contraseñas...")
@@ -364,7 +532,10 @@ def main():
         # 5. Crear mascotas
         mascotas = create_mascotas(tutores)
 
-        # 6. Verificar contraseñas
+        # 6. Crear inventario
+        inventario = create_inventario(usuarios)
+
+        # 7. Verificar contraseñas
         passwords_ok = verify_passwords(usuarios)
 
         # Resumen

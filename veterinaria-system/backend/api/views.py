@@ -395,6 +395,27 @@ class RecetaMedicamentoViewSet(viewsets.ModelViewSet):
     serializer_class = RecetaMedicamentoSerializer
     filterset_fields = ['historial_medico', 'medicamento']
 
+    def perform_create(self, serializer):
+        """
+        Al crear una receta, reduce automáticamente el stock del medicamento.
+        """
+        receta = serializer.save()
+
+        # Reducir stock del inventario
+        medicamento = receta.medicamento
+        cantidad_recetada = receta.cantidad_total
+
+        if medicamento.cantidad < cantidad_recetada:
+            # Si no hay suficiente stock, revertir la creación
+            receta.delete()
+            raise serializers.ValidationError({
+                'error': f'Stock insuficiente. Disponible: {medicamento.cantidad}, Solicitado: {cantidad_recetada}'
+            })
+
+        # Reducir stock
+        medicamento.cantidad -= cantidad_recetada
+        medicamento.save()
+
     @action(detail=False, methods=['get'], url_path='por_historial/(?P<historial_id>[^/.]+)')
     def por_historial(self, request, historial_id=None):
         """
