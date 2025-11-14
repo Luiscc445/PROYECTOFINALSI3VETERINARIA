@@ -117,31 +117,40 @@ def create_roles():
 
 
 def create_users(roles):
-    """Crea usuarios con contraseñas funcionales"""
-    print_step("Creando usuarios con password: admin123...")
+    """Crea usuarios con contraseñas diferentes por rol"""
+    print_step("Creando usuarios...")
 
-    # Generar hash UNA SOLA VEZ para todos
-    password_hash = generate_password_hash('admin123')
-    print_success(f"Hash generado: {password_hash[:50]}...")
+    # Generar hashes DIFERENTES para cada rol
+    admin_password = 'admin123'
+    vet_password = 'vet123'
+    tutor_password = 'tutor123'
+
+    admin_hash = generate_password_hash(admin_password)
+    vet_hash = generate_password_hash(vet_password)
+    tutor_hash = generate_password_hash(tutor_password)
+
+    print_success(f"Hash admin generado para password: {admin_password}")
+    print_success(f"Hash vet generado para password: {vet_password}")
+    print_success(f"Hash tutor generado para password: {tutor_password}")
 
     usuarios = {}
 
-    # 1. ADMINISTRADOR
+    # 1. ADMINISTRADOR - Password: admin123
     admin = Usuario.objects.create(
         email='admin@vetclinic.com',
-        password_hash=password_hash,
+        password_hash=admin_hash,
         nombre_completo='Carlos Mendoza',
         telefono='0991234567',
         rol=roles['administrador'],
         activo=True
     )
     usuarios['admin'] = admin
-    print_success(f"✓ ADMIN creado: {admin.email}")
+    print_success(f"✓ ADMIN creado: {admin.email} / {admin_password}")
 
-    # 2. VETERINARIOS
+    # 2. VETERINARIOS - Password: vet123
     vet1 = Usuario.objects.create(
         email='dra.garcia@vetclinic.com',
-        password_hash=password_hash,
+        password_hash=vet_hash,
         nombre_completo='Dra. María García Rodríguez',
         telefono='0992345678',
         rol=roles['veterinario'],
@@ -149,11 +158,11 @@ def create_users(roles):
         activo=True
     )
     usuarios['vet1'] = vet1
-    print_success(f"✓ VETERINARIO creado: {vet1.email} - {vet1.get_especialidad_display()}")
+    print_success(f"✓ VETERINARIO creado: {vet1.email} / {vet_password} - {vet1.get_especialidad_display()}")
 
     vet2 = Usuario.objects.create(
         email='dr.lopez@vetclinic.com',
-        password_hash=password_hash,
+        password_hash=vet_hash,
         nombre_completo='Dr. Roberto López Martínez',
         telefono='0993456789',
         rol=roles['veterinario'],
@@ -161,11 +170,11 @@ def create_users(roles):
         activo=True
     )
     usuarios['vet2'] = vet2
-    print_success(f"✓ VETERINARIO creado: {vet2.email} - {vet2.get_especialidad_display()}")
+    print_success(f"✓ VETERINARIO creado: {vet2.email} / {vet_password} - {vet2.get_especialidad_display()}")
 
     vet3 = Usuario.objects.create(
         email='dra.fernandez@vetclinic.com',
-        password_hash=password_hash,
+        password_hash=vet_hash,
         nombre_completo='Dra. Ana Fernández Santos',
         telefono='0994567890',
         rol=roles['veterinario'],
@@ -173,41 +182,41 @@ def create_users(roles):
         activo=True
     )
     usuarios['vet3'] = vet3
-    print_success(f"✓ VETERINARIO creado: {vet3.email} - {vet3.get_especialidad_display()}")
+    print_success(f"✓ VETERINARIO creado: {vet3.email} / {vet_password} - {vet3.get_especialidad_display()}")
 
-    # 3. TUTORES
+    # 3. TUTORES - Password: tutor123
     tutor1_user = Usuario.objects.create(
         email='juan.perez@gmail.com',
-        password_hash=password_hash,
+        password_hash=tutor_hash,
         nombre_completo='Juan Pérez González',
         telefono='0995678901',
         rol=roles['tutor'],
         activo=True
     )
     usuarios['tutor1_user'] = tutor1_user
-    print_success(f"✓ TUTOR creado: {tutor1_user.email}")
+    print_success(f"✓ TUTOR creado: {tutor1_user.email} / {tutor_password}")
 
     tutor2_user = Usuario.objects.create(
         email='maria.lopez@gmail.com',
-        password_hash=password_hash,
+        password_hash=tutor_hash,
         nombre_completo='María López Silva',
         telefono='0996789012',
         rol=roles['tutor'],
         activo=True
     )
     usuarios['tutor2_user'] = tutor2_user
-    print_success(f"✓ TUTOR creado: {tutor2_user.email}")
+    print_success(f"✓ TUTOR creado: {tutor2_user.email} / {tutor_password}")
 
     tutor3_user = Usuario.objects.create(
         email='carlos.martinez@gmail.com',
-        password_hash=password_hash,
+        password_hash=tutor_hash,
         nombre_completo='Carlos Martínez Rodríguez',
         telefono='0997890123',
         rol=roles['tutor'],
         activo=True
     )
     usuarios['tutor3_user'] = tutor3_user
-    print_success(f"✓ TUTOR creado: {tutor3_user.email}")
+    print_success(f"✓ TUTOR creado: {tutor3_user.email} / {tutor_password}")
 
     return usuarios
 
@@ -306,19 +315,26 @@ def verify_passwords(usuarios):
     """Verifica que las contraseñas funcionen"""
     print_step("Verificando contraseñas...")
 
-    password = 'admin123'
-    password_bytes = password.encode('utf-8')
+    # Passwords por rol
+    passwords_by_role = {
+        'administrador': 'admin123',
+        'veterinario': 'vet123',
+        'tutor': 'tutor123'
+    }
 
     all_ok = True
     for key, usuario in usuarios.items():
-        if usuario.rol.nombre in ['administrador', 'veterinario', 'tutor']:
+        rol_nombre = usuario.rol.nombre
+        if rol_nombre in passwords_by_role:
+            password = passwords_by_role[rol_nombre]
+            password_bytes = password.encode('utf-8')
             hash_bytes = usuario.password_hash.encode('utf-8')
             result = bcrypt.checkpw(password_bytes, hash_bytes)
 
             if result:
-                print_success(f"✓ {usuario.email} - Password verificada correctamente")
+                print_success(f"✓ {usuario.email} ({rol_nombre}) - Password '{password}' verificada correctamente")
             else:
-                print_error(f"✗ {usuario.email} - Password NO funciona")
+                print_error(f"✗ {usuario.email} ({rol_nombre}) - Password '{password}' NO funciona")
                 all_ok = False
 
     return all_ok
@@ -364,7 +380,7 @@ def main():
         print("\n" + "=" * 80)
         print("CREDENCIALES PARA LOGIN:")
         print("=" * 80)
-        print(f"\n{Colors.YELLOW}PASSWORD PARA TODOS: admin123{Colors.RESET}\n")
+        print(f"\n{Colors.YELLOW}IMPORTANTE: Cada rol tiene su propia contraseña{Colors.RESET}\n")
 
         print(f"{Colors.RED}🔴 ADMINISTRADOR:{Colors.RESET}")
         print("   Email: admin@vetclinic.com")
@@ -375,14 +391,14 @@ def main():
         print("   Email: dra.garcia@vetclinic.com (Medicina General)")
         print("   Email: dr.lopez@vetclinic.com (Cirugía)")
         print("   Email: dra.fernandez@vetclinic.com (Dermatología)")
-        print("   Password: admin123")
+        print("   Password: vet123")
         print()
 
         print(f"{Colors.GREEN}🟢 TUTORES:{Colors.RESET}")
         print("   Email: juan.perez@gmail.com")
         print("   Email: maria.lopez@gmail.com")
         print("   Email: carlos.martinez@gmail.com")
-        print("   Password: admin123")
+        print("   Password: tutor123")
         print()
 
         print("=" * 80)
