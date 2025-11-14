@@ -20,12 +20,14 @@ class RolSerializer(serializers.ModelSerializer):
 class UsuarioSerializer(serializers.ModelSerializer):
     """Serializer para el modelo Usuario"""
     rol_nombre = serializers.CharField(source='rol.nombre', read_only=True)
+    especialidad_display = serializers.CharField(source='get_especialidad_display', read_only=True)
 
     class Meta:
         model = Usuario
         fields = [
             'id', 'email', 'password_hash', 'nombre_completo',
-            'telefono', 'rol', 'rol_nombre', 'activo',
+            'telefono', 'rol', 'rol_nombre', 'especialidad',
+            'especialidad_display', 'activo',
             'created_at', 'updated_at'
         ]
         extra_kwargs = {
@@ -36,10 +38,11 @@ class UsuarioSerializer(serializers.ModelSerializer):
 class UsuarioListSerializer(serializers.ModelSerializer):
     """Serializer simplificado para listar usuarios"""
     rol_nombre = serializers.CharField(source='rol.nombre', read_only=True)
+    especialidad_display = serializers.CharField(source='get_especialidad_display', read_only=True)
 
     class Meta:
         model = Usuario
-        fields = ['id', 'email', 'nombre_completo', 'telefono', 'rol_nombre', 'activo']
+        fields = ['id', 'email', 'nombre_completo', 'telefono', 'rol_nombre', 'especialidad', 'especialidad_display', 'activo']
 
 
 class TutorSerializer(serializers.ModelSerializer):

@@ -55,7 +55,10 @@ export const usuariosAPI = {
   create: (data) => api.post('/usuarios/', data),
   update: (id, data) => api.put(`/usuarios/${id}/`, data),
   delete: (id) => api.delete(`/usuarios/${id}/`),
-  getVeterinarios: () => api.get('/usuarios/veterinarios/'),
+  getVeterinarios: (especialidad) => {
+    const params = especialidad ? { especialidad } : {};
+    return api.get('/usuarios/veterinarios/', { params });
+  },
 };
 
 // ============================================
@@ -68,6 +71,7 @@ export const tutoresAPI = {
   update: (id, data) => api.put(`/tutores/${id}/`, data),
   delete: (id) => api.delete(`/tutores/${id}/`),
   getMascotas: (id) => api.get(`/tutores/${id}/mascotas/`),
+  getMe: (email) => api.get('/tutores/me/', { params: { email } }),
 };
 
 // ============================================
@@ -108,6 +112,7 @@ export const mascotasAPI = {
   },
   delete: (id) => api.delete(`/mascotas/${id}/`),
   getHistorialCompleto: (id) => api.get(`/mascotas/${id}/historial_completo/`),
+  getMisMascotas: (tutorId) => api.get('/mascotas/mis_mascotas/', { params: { tutor_id: tutorId } }),
 };
 
 // ============================================
@@ -121,6 +126,7 @@ export const citasAPI = {
   delete: (id) => api.delete(`/citas/${id}/`),
   getProximas: () => api.get('/citas/proximas/'),
   cambiarEstado: (id, estado) => api.post(`/citas/${id}/cambiar_estado/`, { estado }),
+  getMisCitas: (tutorId) => api.get('/citas/mis_citas/', { params: { tutor_id: tutorId } }),
 };
 
 // ============================================

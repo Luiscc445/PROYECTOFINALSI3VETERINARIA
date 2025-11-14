@@ -62,8 +62,15 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         """
         Retorna solo los usuarios con rol de veterinario.
         GET /api/usuarios/veterinarios/
+        GET /api/usuarios/veterinarios/?especialidad=cirugia
         """
         veterinarios = self.queryset.filter(rol__nombre='veterinario', activo=True)
+
+        # Filtrar por especialidad si se proporciona
+        especialidad = request.query_params.get('especialidad', None)
+        if especialidad:
+            veterinarios = veterinarios.filter(especialidad=especialidad)
+
         serializer = UsuarioListSerializer(veterinarios, many=True)
         return Response(serializer.data)
 
@@ -78,6 +85,7 @@ class TutorViewSet(viewsets.ModelViewSet):
     - PUT /api/tutores/{id}/
     - DELETE /api/tutores/{id}/
     - GET /api/tutores/{id}/mascotas/ (custom action)
+    - GET /api/tutores/me/ (custom action - obtener tutor actual)
     """
     queryset = Tutor.objects.select_related('usuario').all()
     serializer_class = TutorSerializer
@@ -88,6 +96,23 @@ class TutorViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return TutorListSerializer
         return TutorSerializer
+
+    @action(detail=False, methods=['get'])
+    def me(self, request):
+        """
+        Retorna el tutor correspondiente al email del request.
+        GET /api/tutores/me/?email=tutor@example.com
+        """
+        email = request.query_params.get('email')
+        if not email:
+            return Response({'error': 'Email requerido'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            tutor = Tutor.objects.select_related('usuario').get(usuario__email=email)
+            serializer = self.get_serializer(tutor)
+            return Response(serializer.data)
+        except Tutor.DoesNotExist:
+            return Response({'error': 'Tutor no encontrado'}, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=True, methods=['get'])
     def mascotas(self, request, pk=None):
@@ -111,6 +136,7 @@ class MascotaViewSet(viewsets.ModelViewSet):
     - PUT /api/mascotas/{id}/
     - DELETE /api/mascotas/{id}/
     - GET /api/mascotas/{id}/historial_completo/ (custom action)
+    - GET /api/mascotas/mis_mascotas/?tutor_id=X (custom action)
     """
     queryset = Mascota.objects.select_related('tutor__usuario').all()
     serializer_class = MascotaSerializer
@@ -121,6 +147,20 @@ class MascotaViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return MascotaListSerializer
         return MascotaSerializer
+
+    @action(detail=False, methods=['get'])
+    def mis_mascotas(self, request):
+        """
+        Retorna las mascotas de un tutor específico.
+        GET /api/mascotas/mis_mascotas/?tutor_id=X
+        """
+        tutor_id = request.query_params.get('tutor_id')
+        if not tutor_id:
+            return Response({'error': 'tutor_id requerido'}, status=status.HTTP_400_BAD_REQUEST)
+
+        mascotas = self.queryset.filter(tutor_id=tutor_id, activo=True)
+        serializer = MascotaListSerializer(mascotas, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['get'])
     def historial_completo(self, request, pk=None):
@@ -143,6 +183,7 @@ class CitaViewSet(viewsets.ModelViewSet):
     - PUT /api/citas/{id}/
     - DELETE /api/citas/{id}/
     - GET /api/citas/proximas/ (custom action)
+    - GET /api/citas/mis_citas/?tutor_id=X (custom action)
     - POST /api/citas/{id}/cambiar_estado/ (custom action)
     """
     queryset = Cita.objects.select_related(
@@ -165,6 +206,20 @@ class CitaViewSet(viewsets.ModelViewSet):
             fecha_hora__lte=fecha_limite,
             estado__in=['pendiente', 'confirmada']
         ).order_by('fecha_hora')
+        serializer = self.get_serializer(citas, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def mis_citas(self, request):
+        """
+        Retorna las citas de las mascotas de un tutor específico.
+        GET /api/citas/mis_citas/?tutor_id=X
+        """
+        tutor_id = request.query_params.get('tutor_id')
+        if not tutor_id:
+            return Response({'error': 'tutor_id requerido'}, status=status.HTTP_400_BAD_REQUEST)
+
+        citas = self.queryset.filter(mascota__tutor_id=tutor_id).order_by('-fecha_hora')
         serializer = self.get_serializer(citas, many=True)
         return Response(serializer.data)
 
