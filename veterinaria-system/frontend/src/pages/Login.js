@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { authAPI } from '../services/api';
 import '../styles/Login.css';
 
 const Login = () => {
@@ -14,42 +15,38 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Usuarios de prueba (simulación - en producción esto vendría del backend)
-  const usuariosPrueba = [
-    { email: 'admin@veterinaria.com', password: 'admin123', rol_nombre: 'administrador', nombre_completo: 'Admin Sistema', id: 1 },
-    { email: 'vet1@veterinaria.com', password: 'vet123', rol_nombre: 'veterinario', nombre_completo: 'Dr. Carlos Méndez', id: 2 },
-    { email: 'tutor1@gmail.com', password: 'tutor123', rol_nombre: 'tutor', nombre_completo: 'Juan Pérez', id: 4 },
-  ];
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      // Simulación de login (en producción usar authAPI.login)
-      const usuario = usuariosPrueba.find(
-        u => u.email === email && u.password === password
-      );
+      // Llamar al backend real
+      const response = await authAPI.login({ email, password });
+      const userData = response.data.user;
 
-      if (usuario) {
-        const { password, ...userData } = usuario;
-        login(userData);
+      // Guardar usuario en contexto
+      login(userData);
 
-        // Redirigir según el rol
-        if (usuario.rol_nombre === 'administrador') {
-          navigate('/admin');
-        } else if (usuario.rol_nombre === 'veterinario') {
-          navigate('/veterinario');
-        } else if (usuario.rol_nombre === 'tutor') {
-          navigate('/tutor');
-        }
+      // Redirigir según el rol
+      if (userData.rol_nombre === 'administrador') {
+        navigate('/admin');
+      } else if (userData.rol_nombre === 'veterinario') {
+        navigate('/veterinario');
+      } else if (userData.rol_nombre === 'tutor') {
+        navigate('/tutor');
       } else {
-        setError('Credenciales inválidas');
+        setError('Rol de usuario no reconocido');
       }
     } catch (err) {
-      setError('Error al iniciar sesión');
-      console.error(err);
+      console.error('Error en login:', err);
+      if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else if (err.response?.status === 401) {
+        setError('Credenciales inválidas');
+      } else {
+        setError('Error al conectar con el servidor. Asegúrate de que el backend esté corriendo.');
+      }
     } finally {
       setLoading(false);
     }
@@ -100,9 +97,9 @@ const Login = () => {
         <div className="test-users">
           <h3>Usuarios de Prueba:</h3>
           <ul>
-            <li><strong>Administrador:</strong> admin@veterinaria.com / admin123</li>
-            <li><strong>Veterinario:</strong> vet1@veterinaria.com / vet123</li>
-            <li><strong>Tutor:</strong> tutor1@gmail.com / tutor123</li>
+            <li><strong>Administrador:</strong> admin@vetclinic.com / admin123</li>
+            <li><strong>Veterinario:</strong> dra.garcia@vetclinic.com / vet123</li>
+            <li><strong>Tutor:</strong> juan.perez@gmail.com / tutor123</li>
           </ul>
         </div>
       </div>
