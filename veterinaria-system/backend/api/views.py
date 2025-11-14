@@ -488,7 +488,7 @@ class LoginView(APIView):
                     'id': usuario.id,
                     'email': usuario.email,
                     'nombre': usuario.nombre_completo,
-                    'rol': usuario.rol.nombre if usuario.rol else None,
+                    'rol_nombre': usuario.rol.nombre if usuario.rol else None,
                     'especialidad': usuario.get_especialidad_display() if usuario.especialidad else None,
                 }
 
