@@ -474,7 +474,7 @@ class LoginView(APIView):
 
             # Verificar la contraseña manualmente
             # (Asumiendo que las contraseñas están en texto plano - NO SEGURO)
-            if usuario.password == password:
+            if usuario.password_hash == password:
                 # Autenticar y crear sesión
                 # Nota: Django espera un objeto User, pero estamos usando Usuario custom
                 # Por ahora, creamos la sesión manualmente
@@ -486,8 +486,7 @@ class LoginView(APIView):
                 user_data = {
                     'id': usuario.id,
                     'email': usuario.email,
-                    'nombre': usuario.nombre,
-                    'apellido': usuario.apellido,
+                    'nombre': usuario.nombre_completo,
                     'rol': usuario.rol.nombre if usuario.rol else None,
                     'especialidad': usuario.get_especialidad_display() if usuario.especialidad else None,
                 }
