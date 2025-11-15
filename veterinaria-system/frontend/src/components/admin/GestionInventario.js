@@ -1,22 +1,33 @@
 /**
- * GestionInventario - Gestión de productos e inventario
+ * GestionInventario - CRUD completo de inventario
  */
 import React, { useState, useEffect } from 'react';
 import { inventarioAPI } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
 import '../../styles/Tables.css';
 
 const GestionInventario = () => {
-  const [productos, setProductos] = useState([]);
+  const [inventario, setInventario] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showMovModal, setShowMovModal] = useState(false);
-  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
-  const [movimiento, setMovimiento] = useState({
+  const [showModal, setShowModal] = useState(false);
+  const [showMovimientoModal, setShowMovimientoModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [formData, setFormData] = useState({
+    codigo: '',
+    nombre: '',
+    categoria: 'medicamento',
+    descripcion: '',
+    cantidad: 0,
+    unidad_medida: '',
+    precio_unitario: '',
+    stock_minimo: 0,
+  });
+  const [movimientoData, setMovimientoData] = useState({
     tipo_movimiento: 'entrada',
-    cantidad: '',
+    cantidad: 0,
     motivo: '',
   });
-  const { user } = useAuth();
+  const [editingId, setEditingId] = useState(null);
+  const [filtroCategoria, setFiltroCategoria] = useState('');
 
   useEffect(() => {
     cargarInventario();
@@ -25,35 +36,123 @@ const GestionInventario = () => {
   const cargarInventario = async () => {
     try {
       const response = await inventarioAPI.getAll();
-      setProductos(response.data.results || response.data);
+      setInventario(response.data.results || response.data);
     } catch (error) {
       console.error('Error cargando inventario:', error);
+      alert('Error al cargar inventario');
     } finally {
       setLoading(false);
     }
   };
 
-  const abrirModalMovimiento = (producto) => {
-    setProductoSeleccionado(producto);
-    setShowMovModal(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const dataToSend = {
+        ...formData,
+        cantidad: parseInt(formData.cantidad),
+        stock_minimo: parseInt(formData.stock_minimo),
+        precio_unitario: parseFloat(formData.precio_unitario),
+      };
+
+      if (editingId) {
+        await inventarioAPI.update(editingId, dataToSend);
+      } else {
+        await inventarioAPI.create(dataToSend);
+      }
+      cargarInventario();
+      cerrarModal();
+      alert('Producto guardado exitosamente');
+    } catch (error) {
+      console.error('Error guardando producto:', error);
+      alert('Error al guardar producto: ' + (error.response?.data?.error || error.message));
+    }
   };
 
   const handleMovimiento = async (e) => {
     e.preventDefault();
     try {
-      await inventarioAPI.registrarMovimiento(productoSeleccionado.id, {
-        ...movimiento,
-        usuario_id: user.id,
-      });
-      alert('Movimiento registrado exitosamente');
+      const dataToSend = {
+        tipo_movimiento: movimientoData.tipo_movimiento,
+        cantidad: parseInt(movimientoData.cantidad),
+        motivo: movimientoData.motivo,
+      };
+
+      await inventarioAPI.registrarMovimiento(selectedItem.id, dataToSend);
       cargarInventario();
-      setShowMovModal(false);
-      setMovimiento({ tipo_movimiento: 'entrada', cantidad: '', motivo: '' });
+      cerrarMovimientoModal();
+      alert('Movimiento registrado exitosamente');
     } catch (error) {
       console.error('Error registrando movimiento:', error);
-      alert('Error al registrar movimiento');
+      alert('Error al registrar movimiento: ' + (error.response?.data?.error || error.message));
     }
   };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('¿Está seguro de eliminar este producto?')) {
+      try {
+        await inventarioAPI.delete(id);
+        cargarInventario();
+        alert('Producto eliminado exitosamente');
+      } catch (error) {
+        console.error('Error eliminando producto:', error);
+        alert('Error al eliminar producto');
+      }
+    }
+  };
+
+  const abrirModal = (item = null) => {
+    if (item) {
+      setFormData({
+        codigo: item.codigo,
+        nombre: item.nombre,
+        categoria: item.categoria,
+        descripcion: item.descripcion || '',
+        cantidad: item.cantidad,
+        unidad_medida: item.unidad_medida,
+        precio_unitario: item.precio_unitario,
+        stock_minimo: item.stock_minimo,
+      });
+      setEditingId(item.id);
+    } else {
+      setFormData({
+        codigo: '',
+        nombre: '',
+        categoria: 'medicamento',
+        descripcion: '',
+        cantidad: 0,
+        unidad_medida: '',
+        precio_unitario: '',
+        stock_minimo: 0,
+      });
+      setEditingId(null);
+    }
+    setShowModal(true);
+  };
+
+  const cerrarModal = () => {
+    setShowModal(false);
+    setEditingId(null);
+  };
+
+  const abrirMovimientoModal = (item) => {
+    setSelectedItem(item);
+    setMovimientoData({
+      tipo_movimiento: 'entrada',
+      cantidad: 0,
+      motivo: '',
+    });
+    setShowMovimientoModal(true);
+  };
+
+  const cerrarMovimientoModal = () => {
+    setShowMovimientoModal(false);
+    setSelectedItem(null);
+  };
+
+  const inventarioFiltrado = filtroCategoria
+    ? inventario.filter((item) => item.categoria === filtroCategoria)
+    : inventario;
 
   if (loading) {
     return <div className="loading">Cargando inventario...</div>;
@@ -63,6 +162,22 @@ const GestionInventario = () => {
     <div className="gestion-container">
       <div className="gestion-header">
         <h1>Gestión de Inventario</h1>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <select
+            value={filtroCategoria}
+            onChange={(e) => setFiltroCategoria(e.target.value)}
+            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+          >
+            <option value="">Todas las categorías</option>
+            <option value="medicamento">Medicamentos</option>
+            <option value="alimento">Alimentos</option>
+            <option value="accesorio">Accesorios</option>
+            <option value="equipamiento">Equipamiento</option>
+          </select>
+          <button className="btn btn-primary" onClick={() => abrirModal()}>
+            + Nuevo Producto
+          </button>
+        </div>
       </div>
 
       <div className="table-container">
@@ -72,95 +187,252 @@ const GestionInventario = () => {
               <th>Código</th>
               <th>Nombre</th>
               <th>Categoría</th>
-              <th>Cantidad</th>
-              <th>Stock Mínimo</th>
-              <th>Precio</th>
+              <th>Stock</th>
+              <th>Unidad</th>
+              <th>Precio Unit.</th>
+              <th>Stock Mín.</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {productos.map((producto) => (
-              <tr key={producto.id} className={producto.necesita_reposicion ? 'row-warning' : ''}>
-                <td>{producto.codigo}</td>
-                <td>{producto.nombre}</td>
+            {inventarioFiltrado.map((item) => (
+              <tr key={item.id}>
+                <td>{item.codigo}</td>
                 <td>
-                  <span className="badge">{producto.categoria}</span>
+                  <strong>{item.nombre}</strong>
+                  {item.descripcion && (
+                    <div style={{ fontSize: '0.85em', color: '#666' }}>
+                      {item.descripcion}
+                    </div>
+                  )}
                 </td>
                 <td>
-                  <strong>{producto.cantidad}</strong> {producto.unidad_medida}
+                  <span className={`badge badge-${item.categoria}`}>
+                    {item.categoria}
+                  </span>
                 </td>
-                <td>{producto.stock_minimo}</td>
-                <td>Bs. {producto.precio_unitario}</td>
                 <td>
-                  {producto.necesita_reposicion ? (
-                    <span className="status status-danger">⚠️ Bajo Stock</span>
+                  <span
+                    style={{
+                      fontWeight: 'bold',
+                      color: item.cantidad <= item.stock_minimo ? '#e74c3c' : '#27ae60',
+                    }}
+                  >
+                    {item.cantidad}
+                  </span>
+                </td>
+                <td>{item.unidad_medida}</td>
+                <td>${parseFloat(item.precio_unitario).toFixed(2)}</td>
+                <td>{item.stock_minimo}</td>
+                <td>
+                  {item.cantidad <= item.stock_minimo ? (
+                    <span className="status status-inactive">Bajo Stock</span>
                   ) : (
-                    <span className="status status-success">✓ OK</span>
+                    <span className="status status-active">Normal</span>
                   )}
                 </td>
                 <td>
                   <button
-                    className="btn-icon"
-                    onClick={() => abrirModalMovimiento(producto)}
+                    className="btn-icon btn-info"
+                    onClick={() => abrirMovimientoModal(item)}
                     title="Registrar movimiento"
+                    style={{ marginRight: '5px' }}
                   >
                     📦
+                  </button>
+                  <button
+                    className="btn-icon btn-edit"
+                    onClick={() => abrirModal(item)}
+                    title="Editar"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    className="btn-icon btn-delete"
+                    onClick={() => handleDelete(item.id)}
+                    title="Eliminar"
+                  >
+                    🗑️
                   </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        {inventarioFiltrado.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
+            No hay productos en el inventario
+          </div>
+        )}
       </div>
 
-      {showMovModal && (
-        <div className="modal-overlay" onClick={() => setShowMovModal(false)}>
+      {/* Modal para crear/editar producto */}
+      {showModal && (
+        <div className="modal-overlay" onClick={cerrarModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Registrar Movimiento</h2>
-              <button className="modal-close" onClick={() => setShowMovModal(false)}>×</button>
+              <h2>{editingId ? 'Editar Producto' : 'Nuevo Producto'}</h2>
+              <button className="modal-close" onClick={cerrarModal}>×</button>
             </div>
-            <p><strong>Producto:</strong> {productoSeleccionado?.nombre}</p>
-            <p><strong>Stock Actual:</strong> {productoSeleccionado?.cantidad} {productoSeleccionado?.unidad_medida}</p>
-
-            <form onSubmit={handleMovimiento}>
+            <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Tipo de Movimiento</label>
+                <label>Código *</label>
+                <input
+                  type="text"
+                  value={formData.codigo}
+                  onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+                  required
+                  placeholder="Ej: MED-001"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Nombre *</label>
+                <input
+                  type="text"
+                  value={formData.nombre}
+                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                  required
+                  placeholder="Ej: Amoxicilina 500mg"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Categoría *</label>
                 <select
-                  value={movimiento.tipo_movimiento}
-                  onChange={(e) => setMovimiento({ ...movimiento, tipo_movimiento: e.target.value })}
+                  value={formData.categoria}
+                  onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
                   required
                 >
-                  <option value="entrada">Entrada</option>
-                  <option value="salida">Salida</option>
-                  <option value="ajuste">Ajuste</option>
+                  <option value="medicamento">Medicamento</option>
+                  <option value="alimento">Alimento</option>
+                  <option value="accesorio">Accesorio</option>
+                  <option value="equipamiento">Equipamiento</option>
                 </select>
               </div>
 
               <div className="form-group">
-                <label>Cantidad</label>
-                <input
-                  type="number"
-                  value={movimiento.cantidad}
-                  onChange={(e) => setMovimiento({ ...movimiento, cantidad: e.target.value })}
-                  required
-                  min="1"
+                <label>Descripción</label>
+                <textarea
+                  value={formData.descripcion}
+                  onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                  rows="3"
+                  placeholder="Descripción del producto"
                 />
               </div>
 
               <div className="form-group">
-                <label>Motivo</label>
-                <textarea
-                  value={movimiento.motivo}
-                  onChange={(e) => setMovimiento({ ...movimiento, motivo: e.target.value })}
+                <label>Cantidad Inicial *</label>
+                <input
+                  type="number"
+                  value={formData.cantidad}
+                  onChange={(e) => setFormData({ ...formData, cantidad: e.target.value })}
                   required
-                  rows="3"
+                  min="0"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Unidad de Medida *</label>
+                <input
+                  type="text"
+                  value={formData.unidad_medida}
+                  onChange={(e) => setFormData({ ...formData, unidad_medida: e.target.value })}
+                  required
+                  placeholder="Ej: comprimidos, ml, kg, unidades"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Precio Unitario *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.precio_unitario}
+                  onChange={(e) => setFormData({ ...formData, precio_unitario: e.target.value })}
+                  required
+                  min="0"
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Stock Mínimo *</label>
+                <input
+                  type="number"
+                  value={formData.stock_minimo}
+                  onChange={(e) => setFormData({ ...formData, stock_minimo: e.target.value })}
+                  required
+                  min="0"
                 />
               </div>
 
               <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowMovModal(false)}>
+                <button type="button" className="btn btn-secondary" onClick={cerrarModal}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Guardar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para registrar movimiento */}
+      {showMovimientoModal && selectedItem && (
+        <div className="modal-overlay" onClick={cerrarMovimientoModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Registrar Movimiento</h2>
+              <button className="modal-close" onClick={cerrarMovimientoModal}>×</button>
+            </div>
+            <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+              <strong>{selectedItem.nombre}</strong>
+              <div style={{ fontSize: '0.9em', color: '#666' }}>
+                Stock actual: {selectedItem.cantidad} {selectedItem.unidad_medida}
+              </div>
+            </div>
+            <form onSubmit={handleMovimiento}>
+              <div className="form-group">
+                <label>Tipo de Movimiento *</label>
+                <select
+                  value={movimientoData.tipo_movimiento}
+                  onChange={(e) => setMovimientoData({ ...movimientoData, tipo_movimiento: e.target.value })}
+                  required
+                >
+                  <option value="entrada">Entrada (Aumentar stock)</option>
+                  <option value="salida">Salida (Disminuir stock)</option>
+                  <option value="ajuste">Ajuste (Establecer cantidad exacta)</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Cantidad *</label>
+                <input
+                  type="number"
+                  value={movimientoData.cantidad}
+                  onChange={(e) => setMovimientoData({ ...movimientoData, cantidad: e.target.value })}
+                  required
+                  min="0"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Motivo *</label>
+                <textarea
+                  value={movimientoData.motivo}
+                  onChange={(e) => setMovimientoData({ ...movimientoData, motivo: e.target.value })}
+                  required
+                  rows="3"
+                  placeholder="Ej: Compra a proveedor, Venta, Ajuste de inventario, etc."
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={cerrarMovimientoModal}>
                   Cancelar
                 </button>
                 <button type="submit" className="btn btn-primary">
