@@ -10,6 +10,7 @@ from .cita_controller import CitaController
 from .historial_medico_controller import HistorialMedicoController
 from .inventario_controller import InventarioController
 from .movimiento_inventario_controller import MovimientoInventarioController
+from .receta_medicamento_controller import RecetaMedicamentoController
 from .dashboard_controller import DashboardController
 from .auth_controller import LoginView, LogoutView, CurrentUserView, RegisterView
 
@@ -22,6 +23,7 @@ __all__ = [
     'HistorialMedicoController',
     'InventarioController',
     'MovimientoInventarioController',
+    'RecetaMedicamentoController',
     'DashboardController',
     'LoginView',
     'LogoutView',

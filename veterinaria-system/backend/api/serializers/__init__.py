@@ -14,6 +14,7 @@ from .cita_serializer import CitaSerializer
 from .historial_medico_serializer import HistorialMedicoSerializer
 from .inventario_serializer import InventarioSerializer
 from .movimiento_inventario_serializer import MovimientoInventarioSerializer
+from .receta_medicamento_serializer import RecetaMedicamentoSerializer
 
 __all__ = [
     'RolSerializer',
@@ -28,4 +29,5 @@ __all__ = [
     'HistorialMedicoSerializer',
     'InventarioSerializer',
     'MovimientoInventarioSerializer',
+    'RecetaMedicamentoSerializer',
 ]

@@ -10,6 +10,7 @@ from .cita_view import CitaViewSet
 from .historial_medico_view import HistorialMedicoViewSet
 from .inventario_view import InventarioViewSet
 from .movimiento_inventario_view import MovimientoInventarioViewSet
+from .receta_medicamento_view import RecetaMedicamentoViewSet
 from .dashboard_view import DashboardViewSet
 
 __all__ = [
@@ -21,5 +22,6 @@ __all__ = [
     'HistorialMedicoViewSet',
     'InventarioViewSet',
     'MovimientoInventarioViewSet',
+    'RecetaMedicamentoViewSet',
     'DashboardViewSet',
 ]
