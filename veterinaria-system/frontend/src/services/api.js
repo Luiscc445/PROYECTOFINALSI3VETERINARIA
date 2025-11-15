@@ -150,6 +150,7 @@ export const inventarioAPI = {
   update: (id, data) => api.put(`/inventario/${id}/`, data),
   delete: (id) => api.delete(`/inventario/${id}/`),
   getBajoStock: () => api.get('/inventario/bajo_stock/'),
+  getMedicamentos: () => api.get('/inventario/medicamentos/'),
   registrarMovimiento: (id, movimiento) => api.post(`/inventario/${id}/registrar_movimiento/`, movimiento),
 };
 

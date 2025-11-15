@@ -310,6 +310,19 @@ class InventarioViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(productos, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'])
+    def medicamentos(self, request):
+        """
+        Retorna solo los productos de categoría medicamento.
+        GET /api/inventario/medicamentos/
+        """
+        medicamentos = self.queryset.filter(
+            categoria='medicamento',
+            activo=True
+        ).order_by('nombre')
+        serializer = self.get_serializer(medicamentos, many=True)
+        return Response(serializer.data)
+
     @action(detail=True, methods=['post'])
     def registrar_movimiento(self, request, pk=None):
         """
