@@ -18,6 +18,7 @@ from api.models import (
 )
 import bcrypt
 from datetime import datetime, timedelta
+from decimal import Decimal
 
 # Colores para la consola
 class Colors:
