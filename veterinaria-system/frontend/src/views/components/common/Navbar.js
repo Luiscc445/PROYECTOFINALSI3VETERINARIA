@@ -2,9 +2,9 @@
  * Navbar - Barra de navegación superior
  */
 import React from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import '../styles/Navbar.css';
+import '../../../styles/Navbar.css';
 
 const Navbar = ({ title }) => {
   const { user, logout } = useAuth();

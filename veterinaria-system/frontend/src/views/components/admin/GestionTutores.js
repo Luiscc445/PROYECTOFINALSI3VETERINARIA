@@ -2,7 +2,7 @@
  * GestionTutores - Gestión de tutores (dueños de mascotas)
  */
 import React, { useState, useEffect } from 'react';
-import { tutoresAPI } from '../../services/api';
+import { tutoresAPI } from '../../../services/api';
 import '../../styles/Tables.css';
 
 const GestionTutores = () => {

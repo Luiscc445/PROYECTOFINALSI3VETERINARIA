@@ -2,7 +2,7 @@
  * VetHome - Página de inicio del veterinario
  */
 import React, { useState, useEffect } from 'react';
-import { citasAPI } from '../../services/api';
+import { citasAPI } from '../../../services/api';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 

@@ -2,7 +2,7 @@
  * AdminHome - Página de inicio del administrador con estadísticas
  */
 import React, { useState, useEffect } from 'react';
-import { dashboardAPI } from '../../services/api';
+import { dashboardAPI } from '../../../services/api';
 import '../../styles/AdminHome.css';
 
 const AdminHome = () => {

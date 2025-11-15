@@ -2,7 +2,7 @@
  * MisMascotas - Vista de las mascotas del tutor
  */
 import React, { useState, useEffect } from 'react';
-import { mascotasAPI } from '../../services/api';
+import { mascotasAPI } from '../../../services/api';
 import '../../styles/Tables.css';
 
 const MisMascotas = () => {

@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import '../styles/Sidebar.css';
+import '../../../styles/Sidebar.css';
 
 const Sidebar = ({ links }) => {
   return (

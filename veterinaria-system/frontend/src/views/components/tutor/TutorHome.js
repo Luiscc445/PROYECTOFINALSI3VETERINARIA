@@ -2,8 +2,8 @@
  * TutorHome - Página de inicio del tutor
  */
 import React, { useState, useEffect } from 'react';
-import { mascotasAPI, citasAPI } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
+import { mascotasAPI, citasAPI } from '../../../services/api';
+import { useAuth } from '../../../context/AuthContext';
 
 const TutorHome = () => {
   const [resumen, setResumen] = useState({

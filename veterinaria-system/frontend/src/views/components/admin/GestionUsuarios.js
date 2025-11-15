@@ -2,7 +2,7 @@
  * GestionUsuarios - CRUD de usuarios
  */
 import React, { useState, useEffect } from 'react';
-import { usuariosAPI, rolesAPI } from '../../services/api';
+import { usuariosAPI, rolesAPI } from '../../../services/api';
 import '../../styles/Tables.css';
 
 const GestionUsuarios = () => {

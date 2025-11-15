@@ -2,8 +2,8 @@
  * GestionInventario - Gestión de productos e inventario
  */
 import React, { useState, useEffect } from 'react';
-import { inventarioAPI } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
+import { inventarioAPI } from '../../../services/api';
+import { useAuth } from '../../../context/AuthContext';
 import '../../styles/Tables.css';
 
 const GestionInventario = () => {
