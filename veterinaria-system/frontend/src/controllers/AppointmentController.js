@@ -3,7 +3,7 @@
  * Arquitectura MVC - Capa de Controladores
  */
 
-import api from '../services/api';
+import api from '../models/api';
 import { Appointment } from '../models';
 
 class AppointmentController {

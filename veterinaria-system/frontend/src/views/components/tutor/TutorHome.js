@@ -2,7 +2,7 @@
  * TutorHome - Página de inicio del tutor
  */
 import React, { useState, useEffect } from 'react';
-import { mascotasAPI, citasAPI } from '../../../services/api';
+import { mascotasAPI, citasAPI } from '../../../models/api';
 import { useAuth } from '../../../context/AuthContext';
 
 const TutorHome = () => {

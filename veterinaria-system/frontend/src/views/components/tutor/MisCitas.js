@@ -2,10 +2,10 @@
  * MisCitas - Vista de citas del tutor
  */
 import React, { useState, useEffect } from 'react';
-import { citasAPI } from '../../../services/api';
+import { citasAPI } from '../../../models/api';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import '../../styles/Tables.css';
+import '../../../styles/Tables.css';
 
 const MisCitas = () => {
   const [citas, setCitas] = useState([]);
