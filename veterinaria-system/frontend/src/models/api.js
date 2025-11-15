@@ -138,6 +138,37 @@ export const tutoresAPI = {
 };
 
 // ======================
+// VETERINARIOS
+// ======================
+
+export const veterinariosAPI = {
+  getAll: async () => {
+    const response = await apiClient.get('/veterinarios/');
+    return response.data;
+  },
+
+  getById: async (id) => {
+    const response = await apiClient.get(`/veterinarios/${id}/`);
+    return response.data;
+  },
+
+  create: async (veterinarioData) => {
+    const response = await apiClient.post('/veterinarios/', veterinarioData);
+    return response.data;
+  },
+
+  update: async (id, veterinarioData) => {
+    const response = await apiClient.put(`/veterinarios/${id}/`, veterinarioData);
+    return response.data;
+  },
+
+  delete: async (id) => {
+    const response = await apiClient.delete(`/veterinarios/${id}/`);
+    return response.data;
+  },
+};
+
+// ======================
 // MASCOTAS
 // ======================
 

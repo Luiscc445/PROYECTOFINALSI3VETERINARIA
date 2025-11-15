@@ -6,4 +6,6 @@
 export { default as AdminHome } from './AdminHome';
 export { default as GestionUsuarios } from './GestionUsuarios';
 export { default as GestionTutores } from './GestionTutores';
+export { default as GestionMascotas } from './GestionMascotas';
+export { default as GestionCitas } from './GestionCitas';
 export { default as GestionInventario } from './GestionInventario';
