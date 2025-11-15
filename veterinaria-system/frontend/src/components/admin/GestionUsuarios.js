@@ -41,9 +41,12 @@ const GestionUsuarios = () => {
   const cargarRoles = async () => {
     try {
       const response = await rolesAPI.getAll();
-      setRoles(response.data);
+      const rolesData = response.data.results || response.data;
+      setRoles(Array.isArray(rolesData) ? rolesData : []);
     } catch (error) {
       console.error('Error cargando roles:', error);
+      toast.error('Error al cargar roles');
+      setRoles([]);
     }
   };
 

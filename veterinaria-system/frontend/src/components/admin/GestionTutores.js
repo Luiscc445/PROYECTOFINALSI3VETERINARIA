@@ -3,9 +3,11 @@
  */
 import React, { useState, useEffect } from 'react';
 import { tutoresAPI } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import '../../styles/Tables.css';
 
 const GestionTutores = () => {
+  const toast = useToast();
   const [tutores, setTutores] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -19,6 +21,7 @@ const GestionTutores = () => {
       setTutores(response.data.results || response.data);
     } catch (error) {
       console.error('Error cargando tutores:', error);
+      toast.error('Error al cargar tutores');
     } finally {
       setLoading(false);
     }
@@ -28,9 +31,14 @@ const GestionTutores = () => {
     try {
       const response = await tutoresAPI.getMascotas(id);
       const mascotas = response.data;
-      alert(`Mascotas: ${mascotas.map(m => m.nombre).join(', ') || 'Sin mascotas'}`);
+      if (mascotas && mascotas.length > 0) {
+        toast.info(`Mascotas: ${mascotas.map(m => m.nombre).join(', ')}`);
+      } else {
+        toast.info('Este tutor no tiene mascotas registradas');
+      }
     } catch (error) {
       console.error('Error cargando mascotas:', error);
+      toast.error('Error al cargar mascotas del tutor');
     }
   };
 

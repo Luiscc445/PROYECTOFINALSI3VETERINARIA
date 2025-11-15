@@ -3,9 +3,11 @@
  */
 import React, { useState, useEffect } from 'react';
 import { dashboardAPI } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import '../../styles/AdminHome.css';
 
 const AdminHome = () => {
+  const toast = useToast();
   const [estadisticas, setEstadisticas] = useState({
     total_mascotas: 0,
     total_tutores: 0,
@@ -25,6 +27,7 @@ const AdminHome = () => {
       setEstadisticas(response.data);
     } catch (error) {
       console.error('Error cargando estadísticas:', error);
+      toast.error('Error al cargar estadísticas del dashboard');
     } finally {
       setLoading(false);
     }
