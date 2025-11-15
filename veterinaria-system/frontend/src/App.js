@@ -1,12 +1,15 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { ToastProvider } from './context/ToastContext';
-import Login from './pages/Login';
-import AdminDashboard from './pages/AdminDashboard';
-import VeterinarioDashboard from './pages/VeterinarioDashboard';
-import TutorDashboard from './pages/TutorDashboard';
-import ProtectedRoute from './components/ProtectedRoute';
+// Controllers (lógica de negocio y contexts)
+import { AuthProvider, ToastProvider } from './controllers';
+// Views (componentes de presentación)
+import {
+  Login,
+  AdminDashboard,
+  VeterinarioDashboard,
+  TutorDashboard,
+  ProtectedRoute
+} from './views';
 import './styles/App.css';
 
 function App() {

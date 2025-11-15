@@ -22,9 +22,9 @@ const VetHome = () => {
       const response = await citasAPI.getProximas();
       const todasCitas = response.data;
 
-      // Filtrar citas del veterinario actual
+      // Filtrar citas del veterinario actual (comparar por ID es más confiable que por nombre)
       const misCitas = todasCitas.filter(
-        cita => cita.veterinario_nombre === user.nombre_completo
+        cita => cita.veterinario === user.id
       );
 
       // Separar pendientes de confirmadas

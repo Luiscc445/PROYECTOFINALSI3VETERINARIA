@@ -31,9 +31,9 @@ const GestionCitas = () => {
       const response = await citasAPI.getAll();
       const todasCitas = response.data.results || response.data;
 
-      // Filtrar citas del veterinario actual
+      // Filtrar citas del veterinario actual (comparar por ID es más confiable que por nombre)
       const citasVeterinario = todasCitas.filter(
-        cita => cita.veterinario_nombre === user.nombre_completo
+        cita => cita.veterinario === user.id
       );
 
       setCitas(citasVeterinario);
