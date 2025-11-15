@@ -132,10 +132,11 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# Session Configuration for Cross-Origin Requests
-SESSION_COOKIE_SAMESITE = 'None'  # Permitir cookies en peticiones cross-origin
-SESSION_COOKIE_SECURE = False  # False para desarrollo local sin HTTPS
-SESSION_COOKIE_HTTPONLY = True  # Prevenir acceso desde JavaScript
-CSRF_COOKIE_SAMESITE = 'None'
-CSRF_COOKIE_SECURE = False  # False para desarrollo local sin HTTPS
-CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:3000').split(',')
+# Session Configuration for Development (localhost)
+SESSION_COOKIE_SAMESITE = 'Lax'  # Lax funciona en localhost sin HTTPS
+SESSION_COOKIE_SECURE = False  # False para desarrollo local
+SESSION_COOKIE_HTTPONLY = True  # Seguridad: prevenir XSS
+SESSION_COOKIE_AGE = 86400  # 24 horas
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = False
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:3000,http://127.0.0.1:3000').split(',')
