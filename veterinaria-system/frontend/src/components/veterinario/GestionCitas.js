@@ -7,6 +7,7 @@ import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import CrearHistorial from './CrearHistorial';
 import '../../styles/Tables.css';
 
 const GestionCitas = () => {
@@ -15,7 +16,9 @@ const GestionCitas = () => {
   const [citas, setCitas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showPosponerModal, setShowPosponerModal] = useState(false);
+  const [showAtenderModal, setShowAtenderModal] = useState(false);
   const [citaPosponer, setCitaPosponer] = useState(null);
+  const [citaAtender, setCitaAtender] = useState(null);
   const [nuevaFecha, setNuevaFecha] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('todos');
 
@@ -55,11 +58,15 @@ const GestionCitas = () => {
 
   const abrirModalPosponer = (cita) => {
     setCitaPosponer(cita);
-    // Formatear la fecha actual para el input datetime-local
     const fechaActual = new Date(cita.fecha_hora);
     const fechaFormateada = fechaActual.toISOString().slice(0, 16);
     setNuevaFecha(fechaFormateada);
     setShowPosponerModal(true);
+  };
+
+  const abrirModalAtender = (cita) => {
+    setCitaAtender(cita);
+    setShowAtenderModal(true);
   };
 
   const posponerCita = async () => {
@@ -176,9 +183,10 @@ const GestionCitas = () => {
                     {cita.estado === 'confirmada' && (
                       <button
                         className="btn btn-sm btn-primary"
-                        onClick={() => cambiarEstado(cita.id, 'completada')}
+                        onClick={() => abrirModalAtender(cita)}
+                        style={{ fontWeight: 'bold' }}
                       >
-                        ✓ Completar
+                        🏥 Atender Paciente
                       </button>
                     )}
                     {(cita.estado === 'completada' || cita.estado === 'cancelada') && (
@@ -237,6 +245,20 @@ const GestionCitas = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal para atender paciente */}
+      {showAtenderModal && citaAtender && (
+        <CrearHistorial
+          cita={citaAtender}
+          onClose={() => {
+            setShowAtenderModal(false);
+            setCitaAtender(null);
+          }}
+          onSuccess={() => {
+            cargarCitas();
+          }}
+        />
       )}
     </div>
   );

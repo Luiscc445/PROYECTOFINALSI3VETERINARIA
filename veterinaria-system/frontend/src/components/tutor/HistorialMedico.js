@@ -112,13 +112,13 @@ const HistorialMedico = () => {
               <tr>
                 <th>Fecha</th>
                 <th>Mascota</th>
-                <th>Tipo de Consulta</th>
+                <th>Tipo</th>
                 <th>Veterinario</th>
                 <th>Diagnóstico</th>
                 <th>Tratamiento</th>
                 <th>Medicamentos</th>
-                <th>Peso</th>
-                <th>Temp.</th>
+                <th>Observaciones</th>
+                <th>Peso/Temp.</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -142,8 +142,18 @@ const HistorialMedico = () => {
                     <td>{historial.diagnostico}</td>
                     <td>{historial.tratamiento}</td>
                     <td>{historial.medicamentos || '-'}</td>
-                    <td>{historial.peso_kg ? `${historial.peso_kg} kg` : '-'}</td>
-                    <td>{historial.temperatura_c ? `${historial.temperatura_c} °C` : '-'}</td>
+                    <td>
+                      {historial.observaciones ? (
+                        <div style={{ maxWidth: '200px', whiteSpace: 'pre-wrap' }}>
+                          {historial.observaciones}
+                        </div>
+                      ) : '-'}
+                    </td>
+                    <td>
+                      {historial.peso_kg && <div>{historial.peso_kg} kg</div>}
+                      {historial.temperatura_c && <div>{historial.temperatura_c} °C</div>}
+                      {!historial.peso_kg && !historial.temperatura_c && '-'}
+                    </td>
                     <td>
                       <button
                         className="btn btn-sm btn-primary"
