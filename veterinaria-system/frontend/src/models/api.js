@@ -142,28 +142,29 @@ export const tutoresAPI = {
 // ======================
 
 export const veterinariosAPI = {
+  // Los veterinarios son usuarios con rol de veterinario
   getAll: async () => {
-    const response = await apiClient.get('/veterinarios/');
+    const response = await apiClient.get('/usuarios/veterinarios/');
     return response.data;
   },
 
   getById: async (id) => {
-    const response = await apiClient.get(`/veterinarios/${id}/`);
+    const response = await apiClient.get(`/usuarios/${id}/`);
     return response.data;
   },
 
   create: async (veterinarioData) => {
-    const response = await apiClient.post('/veterinarios/', veterinarioData);
+    const response = await apiClient.post('/usuarios/', veterinarioData);
     return response.data;
   },
 
   update: async (id, veterinarioData) => {
-    const response = await apiClient.put(`/veterinarios/${id}/`, veterinarioData);
+    const response = await apiClient.put(`/usuarios/${id}/`, veterinarioData);
     return response.data;
   },
 
   delete: async (id) => {
-    const response = await apiClient.delete(`/veterinarios/${id}/`);
+    const response = await apiClient.delete(`/usuarios/${id}/`);
     return response.data;
   },
 };
