@@ -125,6 +125,7 @@ const GestionCitas = () => {
               <th>Mascota</th>
               <th>Tutor</th>
               <th>Motivo</th>
+              <th>Observaciones del Tutor</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -132,13 +133,13 @@ const GestionCitas = () => {
           <tbody>
             {citasFiltradas.length === 0 ? (
               <tr>
-                <td colSpan="6" style={{ textAlign: 'center', padding: '30px' }}>
+                <td colSpan="7" style={{ textAlign: 'center', padding: '30px' }}>
                   No hay citas {filtroEstado !== 'todos' && \`en estado \${filtroEstado}\`}
                 </td>
               </tr>
             ) : (
               citasFiltradas.map((cita) => (
-                <tr key={cita.id}>
+                <tr key={cita.id} style={cita.observaciones ? { background: '#fffbf0' } : {}}>
                   <td>
                     <strong>{format(new Date(cita.fecha_hora), 'dd/MM/yyyy', { locale: es })}</strong>
                     <br />
@@ -149,6 +150,24 @@ const GestionCitas = () => {
                   <td><strong>{cita.mascota_nombre}</strong></td>
                   <td>{cita.tutor_nombre}</td>
                   <td>{cita.motivo}</td>
+                  <td>
+                    {cita.observaciones ? (
+                      <div style={{
+                        maxWidth: '250px',
+                        padding: '8px',
+                        background: '#fff3cd',
+                        borderRadius: '4px',
+                        border: '1px solid #ffc107',
+                        whiteSpace: 'pre-wrap'
+                      }}>
+                        <strong style={{ color: '#856404' }}>💬 Observaciones:</strong>
+                        <br />
+                        {cita.observaciones}
+                      </div>
+                    ) : (
+                      <span style={{ color: '#999' }}>Sin observaciones</span>
+                    )}
+                  </td>
                   <td>
                     <span className={\`badge badge-\${cita.estado}\`}>
                       {cita.estado}
@@ -213,6 +232,18 @@ const GestionCitas = () => {
               <p><strong>Mascota:</strong> {citaPosponer.mascota_nombre}</p>
               <p><strong>Tutor:</strong> {citaPosponer.tutor_nombre}</p>
               <p><strong>Motivo:</strong> {citaPosponer.motivo}</p>
+              {citaPosponer.observaciones && (
+                <div style={{
+                  marginTop: '10px',
+                  padding: '10px',
+                  background: '#fff3cd',
+                  borderRadius: '6px',
+                  border: '1px solid #ffc107'
+                }}>
+                  <strong style={{ color: '#856404' }}>💬 Observaciones del tutor:</strong>
+                  <p style={{ marginTop: '5px', whiteSpace: 'pre-wrap' }}>{citaPosponer.observaciones}</p>
+                </div>
+              )}
               <p><strong>Fecha actual:</strong> {format(new Date(citaPosponer.fecha_hora), 'dd/MM/yyyy HH:mm', { locale: es })}</p>
             </div>
 
