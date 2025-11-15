@@ -451,9 +451,9 @@ class DashboardViewSet(viewsets.ViewSet):
             'citas_hoy': Cita.objects.filter(
                 fecha_hora__date=hoy
             ).count(),
+            'total_productos': Inventario.objects.count(),
             'productos_bajo_stock': Inventario.objects.filter(
-                cantidad__lte=models.F('stock_minimo'),
-                activo=True
+                cantidad__lte=models.F('stock_minimo')
             ).count()
         }
 

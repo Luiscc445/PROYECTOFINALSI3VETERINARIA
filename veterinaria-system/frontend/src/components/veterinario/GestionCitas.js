@@ -3,11 +3,13 @@
  */
 import React, { useState, useEffect } from 'react';
 import { citasAPI } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import '../../styles/Tables.css';
 
 const GestionCitas = () => {
+  const toast = useToast();
   const [citas, setCitas] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,6 +23,7 @@ const GestionCitas = () => {
       setCitas(response.data.results || response.data);
     } catch (error) {
       console.error('Error cargando citas:', error);
+      toast.error('Error al cargar citas');
     } finally {
       setLoading(false);
     }
@@ -29,11 +32,11 @@ const GestionCitas = () => {
   const cambiarEstado = async (id, nuevoEstado) => {
     try {
       await citasAPI.cambiarEstado(id, nuevoEstado);
-      alert('Estado actualizado');
+      toast.success(`Cita ${nuevoEstado} exitosamente`);
       cargarCitas();
     } catch (error) {
       console.error('Error cambiando estado:', error);
-      alert('Error al cambiar estado');
+      toast.error('Error al cambiar estado de la cita');
     }
   };
 

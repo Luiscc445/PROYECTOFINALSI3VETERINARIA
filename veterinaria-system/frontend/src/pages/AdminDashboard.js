@@ -9,6 +9,7 @@ import AdminHome from '../components/admin/AdminHome';
 import GestionUsuarios from '../components/admin/GestionUsuarios';
 import GestionTutores from '../components/admin/GestionTutores';
 import GestionInventario from '../components/admin/GestionInventario';
+import HistorialRecetas from '../components/admin/HistorialRecetas';
 import '../styles/Dashboard.css';
 
 const AdminDashboard = () => {
@@ -17,6 +18,7 @@ const AdminDashboard = () => {
     { path: '/admin/usuarios', label: 'Usuarios', icon: '👥' },
     { path: '/admin/tutores', label: 'Tutores', icon: '👨‍👩‍👧' },
     { path: '/admin/inventario', label: 'Inventario', icon: '📦' },
+    { path: '/admin/historial-recetas', label: 'Historial Recetas', icon: '📋' },
   ];
 
   return (
@@ -30,6 +32,7 @@ const AdminDashboard = () => {
             <Route path="/usuarios" element={<GestionUsuarios />} />
             <Route path="/tutores" element={<GestionTutores />} />
             <Route path="/inventario" element={<GestionInventario />} />
+            <Route path="/historial-recetas" element={<HistorialRecetas />} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>
         </main>

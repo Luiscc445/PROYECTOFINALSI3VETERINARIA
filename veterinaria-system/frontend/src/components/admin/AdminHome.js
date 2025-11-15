@@ -13,6 +13,7 @@ const AdminHome = () => {
     total_tutores: 0,
     citas_pendientes: 0,
     citas_hoy: 0,
+    total_productos: 0,
     productos_bajo_stock: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -74,8 +75,16 @@ const AdminHome = () => {
           </div>
         </div>
 
+        <div className="stat-card stat-primary">
+          <div className="stat-icon">💊</div>
+          <div className="stat-content">
+            <h3>{estadisticas.total_productos}</h3>
+            <p>Total Productos</p>
+          </div>
+        </div>
+
         <div className="stat-card stat-danger">
-          <div className="stat-icon">📦</div>
+          <div className="stat-icon">⚠️</div>
           <div className="stat-content">
             <h3>{estadisticas.productos_bajo_stock}</h3>
             <p>Productos Bajo Stock</p>

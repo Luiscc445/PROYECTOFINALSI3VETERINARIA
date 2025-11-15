@@ -146,6 +146,26 @@ code {
   color: #F57C00;
 }
 
+.badge-medicamento {
+  background: #e1f5fe;
+  color: #0277bd;
+}
+
+.badge-alimento {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.badge-accesorio {
+  background: #fff9c4;
+  color: #f57f17;
+}
+
+.badge-equipamiento {
+  background: #e0f2f1;
+  color: #00695c;
+}
+
 .badge-pendiente {
   background: #fff3e0;
   color: #F57C00;
