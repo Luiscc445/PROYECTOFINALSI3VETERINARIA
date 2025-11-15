@@ -89,6 +89,8 @@ class LogoutView(APIView):
     """
     Vista para logout de usuarios.
     """
+    permission_classes = [AllowAny]
+
     def post(self, request):
         try:
             # Limpiar sesión
@@ -108,6 +110,8 @@ class CurrentUserView(APIView):
     """
     Vista para obtener el usuario actual de la sesión.
     """
+    permission_classes = [AllowAny]
+
     def get(self, request):
         user_id = request.session.get('user_id')
 

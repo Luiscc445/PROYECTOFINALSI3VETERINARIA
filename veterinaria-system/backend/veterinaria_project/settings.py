@@ -110,7 +110,7 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
+        'api.authentication.CsrfExemptSessionAuthentication',  # Sin CSRF para cross-origin
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -131,3 +131,11 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+# Session Configuration for Cross-Origin Requests
+SESSION_COOKIE_SAMESITE = 'None'  # Permitir cookies en peticiones cross-origin
+SESSION_COOKIE_SECURE = False  # False para desarrollo local sin HTTPS
+SESSION_COOKIE_HTTPONLY = True  # Prevenir acceso desde JavaScript
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = False  # False para desarrollo local sin HTTPS
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:3000').split(',')
