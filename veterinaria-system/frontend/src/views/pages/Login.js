@@ -1,9 +1,11 @@
 /**
  * Login - Página de inicio de sesión
+ * REAL API - Conexión con backend Django
  */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import '../../styles/Login.css';
 
 const Login = () => {
@@ -12,14 +14,8 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { success, error: showError } = useToast();
   const navigate = useNavigate();
-
-  // Usuarios de prueba (simulación - en producción esto vendría del backend)
-  const usuariosPrueba = [
-    { email: 'admin@veterinaria.com', password: 'admin123', rol_nombre: 'administrador', nombre_completo: 'Admin Sistema', id: 1 },
-    { email: 'vet1@veterinaria.com', password: 'vet123', rol_nombre: 'veterinario', nombre_completo: 'Dr. Carlos Méndez', id: 2 },
-    { email: 'tutor1@gmail.com', password: 'tutor123', rol_nombre: 'tutor', nombre_completo: 'Juan Pérez', id: 4 },
-  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,28 +23,29 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Simulación de login (en producción usar authAPI.login)
-      const usuario = usuariosPrueba.find(
-        u => u.email === email && u.password === password
-      );
+      // Login con API real
+      const result = await login(email, password);
 
-      if (usuario) {
-        const { password, ...userData } = usuario;
-        login(userData);
+      if (result.success) {
+        success('Bienvenido al sistema');
 
         // Redirigir según el rol
-        if (usuario.rol_nombre === 'administrador') {
+        const rol = result.user.rol_nombre;
+        if (rol === 'administrador') {
           navigate('/admin');
-        } else if (usuario.rol_nombre === 'veterinario') {
+        } else if (rol === 'veterinario') {
           navigate('/veterinario');
-        } else if (usuario.rol_nombre === 'tutor') {
+        } else if (rol === 'tutor') {
           navigate('/tutor');
         }
       } else {
-        setError('Credenciales inválidas');
+        setError(result.error);
+        showError(result.error);
       }
     } catch (err) {
-      setError('Error al iniciar sesión');
+      const errorMsg = 'Error al iniciar sesión. Por favor, intente nuevamente.';
+      setError(errorMsg);
+      showError(errorMsg);
       console.error(err);
     } finally {
       setLoading(false);
@@ -98,12 +95,9 @@ const Login = () => {
         </form>
 
         <div className="test-users">
-          <h3>Usuarios de Prueba:</h3>
-          <ul>
-            <li><strong>Administrador:</strong> admin@veterinaria.com / admin123</li>
-            <li><strong>Veterinario:</strong> vet1@veterinaria.com / vet123</li>
-            <li><strong>Tutor:</strong> tutor1@gmail.com / tutor123</li>
-          </ul>
+          <h3>Información de Acceso:</h3>
+          <p>Use las credenciales proporcionadas por el administrador del sistema.</p>
+          <p><small>Autenticación con bcrypt - Sistema de producción</small></p>
         </div>
       </div>
     </div>

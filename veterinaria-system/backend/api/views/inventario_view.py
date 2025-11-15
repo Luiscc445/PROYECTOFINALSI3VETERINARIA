@@ -38,6 +38,16 @@ class InventarioViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(products, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'])
+    def medicamentos(self, request):
+        """
+        Retorna solo medicamentos del inventario (para recetas).
+        GET /api/inventario/medicamentos/
+        """
+        medications = InventarioController.get_medicamentos()
+        serializer = self.get_serializer(medications, many=True)
+        return Response(serializer.data)
+
     @action(detail=True, methods=['post'])
     def registrar_movimiento(self, request, pk=None):
         """

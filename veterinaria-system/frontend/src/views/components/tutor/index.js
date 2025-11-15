@@ -6,3 +6,4 @@
 export { default as TutorHome } from './TutorHome';
 export { default as MisMascotas } from './MisMascotas';
 export { default as MisCitas } from './MisCitas';
+export { default as SolicitarCita } from './SolicitarCita';

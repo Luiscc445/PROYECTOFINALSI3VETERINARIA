@@ -33,6 +33,17 @@ class InventarioController:
         )
 
     @staticmethod
+    def get_medicamentos():
+        """
+        Obtiene solo medicamentos del inventario (para recetas).
+        Filtra por categoría 'medicamento' y activos.
+        """
+        return Inventario.objects.filter(
+            categoria='medicamento',
+            activo=True
+        ).order_by('nombre')
+
+    @staticmethod
     def create_product(data):
         """Crea un nuevo producto"""
         return Inventario.objects.create(**data)
