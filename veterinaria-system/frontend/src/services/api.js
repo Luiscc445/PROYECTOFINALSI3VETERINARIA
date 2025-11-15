@@ -126,6 +126,7 @@ export const citasAPI = {
   delete: (id) => api.delete(`/citas/${id}/`),
   getProximas: () => api.get('/citas/proximas/'),
   cambiarEstado: (id, estado) => api.post(`/citas/${id}/cambiar_estado/`, { estado }),
+  posponer: (id, nueva_fecha_hora) => api.post(`/citas/${id}/posponer/`, { nueva_fecha_hora }),
   getMisCitas: (tutorId) => api.get('/citas/mis_citas/', { params: { tutor_id: tutorId } }),
 };
 

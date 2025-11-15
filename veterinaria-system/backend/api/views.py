@@ -262,6 +262,38 @@ class CitaViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(cita)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['post'])
+    def posponer(self, request, pk=None):
+        """
+        Pospone una cita a una nueva fecha.
+        POST /api/citas/{id}/posponer/
+        Body: {"nueva_fecha_hora": "2024-12-01T10:00:00"}
+        """
+        cita = self.get_object()
+        nueva_fecha_hora = request.data.get('nueva_fecha_hora')
+
+        if not nueva_fecha_hora:
+            return Response(
+                {'error': 'nueva_fecha_hora es requerida'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        from django.utils.dateparse import parse_datetime
+        fecha_parseada = parse_datetime(nueva_fecha_hora)
+
+        if not fecha_parseada:
+            return Response(
+                {'error': 'Formato de fecha inválido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        cita.fecha_hora = fecha_parseada
+        cita.estado = 'pendiente'  # Volver a pendiente cuando se pospone
+        cita.save()
+
+        serializer = self.get_serializer(cita)
+        return Response(serializer.data)
+
 
 class HistorialMedicoViewSet(viewsets.ModelViewSet):
     """
