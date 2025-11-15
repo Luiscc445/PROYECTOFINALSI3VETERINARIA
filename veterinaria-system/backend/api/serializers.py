@@ -8,6 +8,7 @@ from .models import (
     HistorialMedico, Inventario, MovimientoInventario, RecetaMedicamento
 )
 import bcrypt
+from datetime import date
 
 
 class RolSerializer(serializers.ModelSerializer):
@@ -39,6 +40,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """
         Crear usuario hasheando la contraseña con bcrypt.
+        Si el rol es 'tutor', crea automáticamente el registro de Tutor.
         """
         password = validated_data.pop('password', None)
 
@@ -49,7 +51,21 @@ class UsuarioSerializer(serializers.ModelSerializer):
             hashed = bcrypt.hashpw(password_bytes, salt)
             validated_data['password_hash'] = hashed.decode('utf-8')
 
-        return super().create(validated_data)
+        usuario = super().create(validated_data)
+
+        # Si el rol es 'tutor', crear automáticamente el registro de Tutor
+        if usuario.rol and usuario.rol.nombre == 'tutor':
+            # Crear Tutor con valores por defecto que el usuario puede actualizar después
+            # Generar un CI temporal único basado en el ID del usuario
+            ci_temporal = f'TEMP-{usuario.id:06d}'
+            Tutor.objects.create(
+                usuario=usuario,
+                ci=ci_temporal,  # CI temporal único, el usuario debe actualizarlo
+                direccion='Pendiente de actualización',
+                fecha_nacimiento=date(2000, 1, 1)  # Fecha por defecto
+            )
+
+        return usuario
 
     def update(self, instance, validated_data):
         """
