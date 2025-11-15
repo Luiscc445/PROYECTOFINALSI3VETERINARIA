@@ -25,8 +25,11 @@ const AdminHome = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    cargarEstadisticas();
-  }, []);
+    // Solo cargar datos si hay usuario autenticado
+    if (user) {
+      cargarEstadisticas();
+    }
+  }, [user]); // Ejecutar cuando cambie el usuario
 
   const cargarEstadisticas = async () => {
     try {

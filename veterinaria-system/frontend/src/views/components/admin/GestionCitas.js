@@ -5,11 +5,13 @@
  */
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../../../context/ToastContext';
+import { useAuth } from '../../../context/AuthContext';
 import { citasAPI, mascotasAPI, veterinariosAPI } from '../../../models/api';
 import '../../../styles/Tables.css';
 
 const GestionCitas = () => {
   const { success, error: showError } = useToast();
+  const { user } = useAuth();
 
   const [citas, setCitas] = useState([]);
   const [mascotas, setMascotas] = useState([]);
@@ -29,8 +31,11 @@ const GestionCitas = () => {
   });
 
   useEffect(() => {
-    cargarDatos();
-  }, []);
+    // Solo cargar datos si hay usuario autenticado
+    if (user) {
+      cargarDatos();
+    }
+  }, [user]); // Ejecutar cuando cambie el usuario
 
   const cargarDatos = async () => {
     try {

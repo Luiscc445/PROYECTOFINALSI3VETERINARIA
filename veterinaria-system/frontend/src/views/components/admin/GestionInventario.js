@@ -41,8 +41,11 @@ const GestionInventario = () => {
   });
 
   useEffect(() => {
-    cargarProductos();
-  }, []);
+    // Solo cargar datos si hay usuario autenticado
+    if (user) {
+      cargarProductos();
+    }
+  }, [user]); // Ejecutar cuando cambie el usuario
 
   const cargarProductos = async () => {
     try {

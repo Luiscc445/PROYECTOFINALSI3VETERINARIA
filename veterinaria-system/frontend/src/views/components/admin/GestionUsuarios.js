@@ -5,11 +5,13 @@
  */
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../../../context/ToastContext';
+import { useAuth } from '../../../context/AuthContext';
 import { usuariosAPI, rolesAPI } from '../../../models/api';
 import '../../../styles/Tables.css';
 
 const GestionUsuarios = () => {
   const { success, error: showError } = useToast();
+  const { user } = useAuth();
 
   const [usuarios, setUsuarios] = useState([]);
   const [roles, setRoles] = useState([]);
@@ -26,8 +28,11 @@ const GestionUsuarios = () => {
   });
 
   useEffect(() => {
-    cargarDatos();
-  }, []);
+    // Solo cargar datos si hay usuario autenticado
+    if (user) {
+      cargarDatos();
+    }
+  }, [user]); // Ejecutar cuando cambie el usuario
 
   const cargarDatos = async () => {
     try {

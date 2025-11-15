@@ -5,11 +5,13 @@
  */
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../../../context/ToastContext';
+import { useAuth } from '../../../context/AuthContext';
 import { tutoresAPI, usuariosAPI } from '../../../models/api';
 import '../../../styles/Tables.css';
 
 const GestionTutores = () => {
   const { success, error: showError } = useToast();
+  const { user } = useAuth();
 
   const [tutores, setTutores] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,8 +30,11 @@ const GestionTutores = () => {
   });
 
   useEffect(() => {
-    cargarTutores();
-  }, []);
+    // Solo cargar datos si hay usuario autenticado
+    if (user) {
+      cargarTutores();
+    }
+  }, [user]); // Ejecutar cuando cambie el usuario
 
   const cargarTutores = async () => {
     try {
