@@ -1,14 +1,12 @@
 /**
  * VeterinarioDashboard - Dashboard del veterinario
+ * Arquitectura MVC - Capa de Vistas
  */
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
-import VetHome from '../components/veterinario/VetHome';
-import GestionCitas from '../components/veterinario/GestionCitas';
-import HistorialesMedicos from '../components/veterinario/HistorialesMedicos';
-import '../styles/Dashboard.css';
+import { Navbar, Sidebar } from '../components/common';
+import { VetHome, GestionCitas, HistorialesMedicos } from '../components/veterinario';
+import '../../styles/Dashboard.css';
 
 const VeterinarioDashboard = () => {
   const sidebarLinks = [

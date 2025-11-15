@@ -1,10 +1,11 @@
 """
 URLs para la API REST del sistema veterinaria.
 Configura los routers para todos los ViewSets.
+Arquitectura MVC - Configuración de Rutas
 """
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import (
+from api.views import (
     RolViewSet, UsuarioViewSet, TutorViewSet, MascotaViewSet,
     CitaViewSet, HistorialMedicoViewSet, InventarioViewSet,
     MovimientoInventarioViewSet, DashboardViewSet

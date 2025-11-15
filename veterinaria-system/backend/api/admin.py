@@ -1,9 +1,10 @@
 """
 Configuración del panel administrativo de Django.
 Registra todos los modelos para su gestión.
+Arquitectura MVC - Administración
 """
 from django.contrib import admin
-from .models import (
+from api.models import (
     Rol, Usuario, Tutor, Mascota, Cita,
     HistorialMedico, Inventario, MovimientoInventario
 )

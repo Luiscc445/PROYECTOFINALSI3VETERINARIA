@@ -1,11 +1,12 @@
+/**
+ * Aplicación Principal
+ * Arquitectura MVC - Punto de Entrada
+ */
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import Login from './pages/Login';
-import AdminDashboard from './pages/AdminDashboard';
-import VeterinarioDashboard from './pages/VeterinarioDashboard';
-import TutorDashboard from './pages/TutorDashboard';
-import ProtectedRoute from './components/ProtectedRoute';
+import { Login, AdminDashboard, VeterinarioDashboard, TutorDashboard } from './views/pages';
+import { ProtectedRoute } from './views/components/common';
 import './styles/App.css';
 
 function App() {

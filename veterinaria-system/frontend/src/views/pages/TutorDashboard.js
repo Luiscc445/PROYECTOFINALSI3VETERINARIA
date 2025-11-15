@@ -1,14 +1,12 @@
 /**
  * TutorDashboard - Dashboard del tutor (dueño de mascotas)
+ * Arquitectura MVC - Capa de Vistas
  */
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
-import TutorHome from '../components/tutor/TutorHome';
-import MisMascotas from '../components/tutor/MisMascotas';
-import MisCitas from '../components/tutor/MisCitas';
-import '../styles/Dashboard.css';
+import { Navbar, Sidebar } from '../components/common';
+import { TutorHome, MisMascotas, MisCitas } from '../components/tutor';
+import '../../styles/Dashboard.css';
 
 const TutorDashboard = () => {
   const sidebarLinks = [

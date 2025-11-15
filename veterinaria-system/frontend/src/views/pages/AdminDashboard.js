@@ -1,15 +1,12 @@
 /**
  * AdminDashboard - Dashboard del administrador
+ * Arquitectura MVC - Capa de Vistas
  */
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
-import AdminHome from '../components/admin/AdminHome';
-import GestionUsuarios from '../components/admin/GestionUsuarios';
-import GestionTutores from '../components/admin/GestionTutores';
-import GestionInventario from '../components/admin/GestionInventario';
-import '../styles/Dashboard.css';
+import { Navbar, Sidebar } from '../components/common';
+import { AdminHome, GestionUsuarios, GestionTutores, GestionInventario } from '../components/admin';
+import '../../styles/Dashboard.css';
 
 const AdminDashboard = () => {
   const sidebarLinks = [
