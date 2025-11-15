@@ -11,6 +11,7 @@ from .historial_medico_controller import HistorialMedicoController
 from .inventario_controller import InventarioController
 from .movimiento_inventario_controller import MovimientoInventarioController
 from .dashboard_controller import DashboardController
+from .auth_controller import LoginView, LogoutView, CurrentUserView, RegisterView
 
 __all__ = [
     'RolController',
@@ -22,4 +23,8 @@ __all__ = [
     'InventarioController',
     'MovimientoInventarioController',
     'DashboardController',
+    'LoginView',
+    'LogoutView',
+    'CurrentUserView',
+    'RegisterView',
 ]

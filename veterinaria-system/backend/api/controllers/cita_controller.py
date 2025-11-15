@@ -1,6 +1,7 @@
 """
 Controller para el modelo Cita.
 Arquitectura MVC - Capa de Controladores
+SISTEMA COMPLETO DE CITAS - NO SIMULADO
 """
 from django.utils import timezone
 from datetime import timedelta
@@ -76,3 +77,130 @@ class CitaController:
         """Elimina una cita"""
         appointment = Cita.objects.get(id=appointment_id)
         appointment.delete()
+
+    @staticmethod
+    def posponer_cita(appointment_id, nueva_fecha_hora):
+        """
+        Pospone una cita cambiando su fecha/hora y volviendo a estado pendiente.
+
+        Args:
+            appointment_id: ID de la cita
+            nueva_fecha_hora: Nueva fecha y hora (datetime object)
+
+        Returns:
+            Cita actualizada
+        """
+        appointment = Cita.objects.get(id=appointment_id)
+        appointment.fecha_hora = nueva_fecha_hora
+        appointment.estado = 'pendiente'  # Vuelve a pendiente al posponer
+        appointment.save()
+        return appointment
+
+    @staticmethod
+    def get_citas_by_veterinario(veterinario_id, filters=None):
+        """
+        Obtiene todas las citas de un veterinario específico.
+        IMPORTANTE: Filtrar por ID, NO por nombre.
+
+        Args:
+            veterinario_id: ID del veterinario
+            filters: Filtros adicionales opcionales
+
+        Returns:
+            QuerySet de citas del veterinario
+        """
+        queryset = Cita.objects.filter(
+            veterinario_id=veterinario_id  # Usar ID, no nombre!
+        ).select_related(
+            'mascota__tutor__usuario',
+            'veterinario'
+        ).order_by('-fecha_hora')
+
+        if filters:
+            queryset = queryset.filter(**filters)
+
+        return queryset
+
+    @staticmethod
+    def get_citas_by_tutor(tutor_id, filters=None):
+        """
+        Obtiene todas las citas de las mascotas de un tutor.
+
+        Args:
+            tutor_id: ID del tutor
+            filters: Filtros adicionales opcionales
+
+        Returns:
+            QuerySet de citas del tutor
+        """
+        queryset = Cita.objects.filter(
+            mascota__tutor_id=tutor_id
+        ).select_related(
+            'mascota__tutor__usuario',
+            'veterinario'
+        ).order_by('-fecha_hora')
+
+        if filters:
+            queryset = queryset.filter(**filters)
+
+        return queryset
+
+    @staticmethod
+    def get_citas_pendientes_veterinario(veterinario_id):
+        """
+        Obtiene solo las citas PENDIENTES de un veterinario.
+        Para mostrar en la sección destacada del VetHome.
+
+        Args:
+            veterinario_id: ID del veterinario
+
+        Returns:
+            QuerySet de citas pendientes
+        """
+        return Cita.objects.filter(
+            veterinario_id=veterinario_id,
+            estado='pendiente'
+        ).select_related(
+            'mascota__tutor__usuario',
+            'veterinario'
+        ).order_by('fecha_hora')
+
+    @staticmethod
+    def aceptar_cita(appointment_id):
+        """
+        Acepta una cita cambiando su estado a 'confirmada'.
+
+        Args:
+            appointment_id: ID de la cita
+
+        Returns:
+            Cita actualizada
+        """
+        return CitaController.change_appointment_status(appointment_id, 'confirmada')
+
+    @staticmethod
+    def cancelar_cita(appointment_id):
+        """
+        Cancela una cita cambiando su estado a 'cancelada'.
+
+        Args:
+            appointment_id: ID de la cita
+
+        Returns:
+            Cita actualizada
+        """
+        return CitaController.change_appointment_status(appointment_id, 'cancelada')
+
+    @staticmethod
+    def completar_cita(appointment_id):
+        """
+        Completa una cita cambiando su estado a 'completada'.
+        Se usa después de crear el historial médico.
+
+        Args:
+            appointment_id: ID de la cita
+
+        Returns:
+            Cita actualizada
+        """
+        return CitaController.change_appointment_status(appointment_id, 'completada')

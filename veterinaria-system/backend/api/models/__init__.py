@@ -10,6 +10,7 @@ from .cita import Cita
 from .historial_medico import HistorialMedico
 from .inventario import Inventario
 from .movimiento_inventario import MovimientoInventario
+from .receta_medicamento import RecetaMedicamento
 
 __all__ = [
     'Rol',
@@ -20,4 +21,5 @@ __all__ = [
     'HistorialMedico',
     'Inventario',
     'MovimientoInventario',
+    'RecetaMedicamento',
 ]
