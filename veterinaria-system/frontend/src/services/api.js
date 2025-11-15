@@ -139,6 +139,11 @@ export const historialesAPI = {
   create: (data) => api.post('/historiales/', data),
   update: (id, data) => api.put(`/historiales/${id}/`, data),
   delete: (id) => api.delete(`/historiales/${id}/`),
+  descargarPDF: (id) => {
+    return api.get(`/historiales/${id}/generar_pdf/`, {
+      responseType: 'blob'
+    });
+  },
 };
 
 // ============================================

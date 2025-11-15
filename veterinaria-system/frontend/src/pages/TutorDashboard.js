@@ -8,6 +8,7 @@ import Sidebar from '../components/Sidebar';
 import TutorHome from '../components/tutor/TutorHome';
 import MisMascotas from '../components/tutor/MisMascotas';
 import MisCitas from '../components/tutor/MisCitas';
+import HistorialMedico from '../components/tutor/HistorialMedico';
 import '../styles/Dashboard.css';
 
 const TutorDashboard = () => {
@@ -15,6 +16,7 @@ const TutorDashboard = () => {
     { path: '/tutor', label: 'Inicio', icon: '🏠', end: true },
     { path: '/tutor/mascotas', label: 'Mis Mascotas', icon: '🐕' },
     { path: '/tutor/citas', label: 'Mis Citas', icon: '📅' },
+    { path: '/tutor/historial', label: 'Historial Médico', icon: '📋' },
   ];
 
   return (
@@ -27,6 +29,7 @@ const TutorDashboard = () => {
             <Route path="/" element={<TutorHome />} />
             <Route path="/mascotas" element={<MisMascotas />} />
             <Route path="/citas" element={<MisCitas />} />
+            <Route path="/historial" element={<HistorialMedico />} />
             <Route path="*" element={<Navigate to="/tutor" replace />} />
           </Routes>
         </main>
