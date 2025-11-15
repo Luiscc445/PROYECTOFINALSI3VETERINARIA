@@ -300,18 +300,19 @@ class InventarioViewSet(viewsets.ModelViewSet):
         Body: {
             "tipo_movimiento": "entrada|salida|ajuste",
             "cantidad": 10,
-            "motivo": "Razón del movimiento",
-            "usuario_id": 1
+            "motivo": "Razón del movimiento"
         }
         """
         inventario = self.get_object()
         tipo_movimiento = request.data.get('tipo_movimiento')
         cantidad = request.data.get('cantidad')
         motivo = request.data.get('motivo')
-        usuario_id = request.data.get('usuario_id')
+
+        # Obtener usuario de la sesión (request.user viene del authentication personalizado)
+        usuario = request.user
 
         # Validaciones
-        if not all([tipo_movimiento, cantidad, motivo, usuario_id]):
+        if not all([tipo_movimiento, cantidad, motivo]):
             return Response(
                 {'error': 'Todos los campos son requeridos'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -319,10 +320,9 @@ class InventarioViewSet(viewsets.ModelViewSet):
 
         try:
             cantidad = int(cantidad)
-            usuario = Usuario.objects.get(id=usuario_id)
-        except (ValueError, Usuario.DoesNotExist):
+        except ValueError:
             return Response(
-                {'error': 'Datos inválidos'},
+                {'error': 'Cantidad debe ser un número válido'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 

@@ -3,9 +3,11 @@
  */
 import React, { useState, useEffect } from 'react';
 import { usuariosAPI, rolesAPI } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import '../../styles/Tables.css';
 
 const GestionUsuarios = () => {
+  const toast = useToast();
   const [usuarios, setUsuarios] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,14 +52,16 @@ const GestionUsuarios = () => {
     try {
       if (editingId) {
         await usuariosAPI.update(editingId, formData);
+        toast.success('Usuario actualizado exitosamente');
       } else {
         await usuariosAPI.create(formData);
+        toast.success(`Usuario ${formData.email} creado exitosamente`);
       }
       cargarUsuarios();
       cerrarModal();
     } catch (error) {
       console.error('Error guardando usuario:', error);
-      alert('Error al guardar usuario');
+      toast.error('Error al guardar usuario: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -66,9 +70,10 @@ const GestionUsuarios = () => {
       try {
         await usuariosAPI.delete(id);
         cargarUsuarios();
+        toast.success('Usuario eliminado exitosamente');
       } catch (error) {
         console.error('Error eliminando usuario:', error);
-        alert('Error al eliminar usuario');
+        toast.error('Error al eliminar usuario');
       }
     }
   };

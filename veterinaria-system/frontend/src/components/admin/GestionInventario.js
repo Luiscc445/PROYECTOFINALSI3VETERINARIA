@@ -3,9 +3,11 @@
  */
 import React, { useState, useEffect } from 'react';
 import { inventarioAPI } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import '../../styles/Tables.css';
 
 const GestionInventario = () => {
+  const toast = useToast();
   const [inventario, setInventario] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -39,7 +41,7 @@ const GestionInventario = () => {
       setInventario(response.data.results || response.data);
     } catch (error) {
       console.error('Error cargando inventario:', error);
-      alert('Error al cargar inventario');
+      toast.error('Error al cargar inventario');
     } finally {
       setLoading(false);
     }
@@ -62,10 +64,10 @@ const GestionInventario = () => {
       }
       cargarInventario();
       cerrarModal();
-      alert('Producto guardado exitosamente');
+      toast.success(editingId ? 'Producto actualizado exitosamente' : 'Producto creado exitosamente');
     } catch (error) {
       console.error('Error guardando producto:', error);
-      alert('Error al guardar producto: ' + (error.response?.data?.error || error.message));
+      toast.error('Error al guardar producto: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -81,10 +83,10 @@ const GestionInventario = () => {
       await inventarioAPI.registrarMovimiento(selectedItem.id, dataToSend);
       cargarInventario();
       cerrarMovimientoModal();
-      alert('Movimiento registrado exitosamente');
+      toast.success(`Movimiento registrado: ${movimientoData.tipo_movimiento} de ${movimientoData.cantidad} unidades`);
     } catch (error) {
       console.error('Error registrando movimiento:', error);
-      alert('Error al registrar movimiento: ' + (error.response?.data?.error || error.message));
+      toast.error('Error al registrar movimiento: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -93,10 +95,10 @@ const GestionInventario = () => {
       try {
         await inventarioAPI.delete(id);
         cargarInventario();
-        alert('Producto eliminado exitosamente');
+        toast.success('Producto eliminado exitosamente');
       } catch (error) {
         console.error('Error eliminando producto:', error);
-        alert('Error al eliminar producto');
+        toast.error('Error al eliminar producto');
       }
     }
   };
