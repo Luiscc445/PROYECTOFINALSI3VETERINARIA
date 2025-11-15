@@ -71,7 +71,7 @@ export const tutoresAPI = {
   update: (id, data) => api.put(`/tutores/${id}/`, data),
   delete: (id) => api.delete(`/tutores/${id}/`),
   getMascotas: (id) => api.get(`/tutores/${id}/mascotas/`),
-  getMe: (email) => api.get('/tutores/me/', { params: { email } }),
+  getMe: () => api.get('/tutores/me/'),  // Usa la sesión autenticada, no requiere email
 };
 
 // ============================================

@@ -100,19 +100,37 @@ class TutorViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def me(self, request):
         """
-        Retorna el tutor correspondiente al email del request.
-        GET /api/tutores/me/?email=tutor@example.com
+        Retorna el tutor correspondiente al usuario autenticado.
+        GET /api/tutores/me/
         """
-        email = request.query_params.get('email')
-        if not email:
-            return Response({'error': 'Email requerido'}, status=status.HTTP_400_BAD_REQUEST)
+        usuario = request.user
+
+        if not usuario or not hasattr(usuario, 'is_authenticated') or not usuario.is_authenticated:
+            return Response({'error': 'Usuario no autenticado'}, status=status.HTTP_401_UNAUTHORIZED)
 
         try:
-            tutor = Tutor.objects.select_related('usuario').get(usuario__email=email)
+            # Intentar obtener el tutor asociado al usuario autenticado
+            tutor = Tutor.objects.select_related('usuario').get(usuario=usuario)
             serializer = self.get_serializer(tutor)
             return Response(serializer.data)
         except Tutor.DoesNotExist:
-            return Response({'error': 'Tutor no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+            # Si no existe, verificar si el usuario es tutor y crear el registro
+            if usuario.rol and usuario.rol.nombre == 'tutor':
+                from datetime import date
+                # Generar un CI temporal único basado en el ID del usuario
+                ci_temporal = f'TEMP-{usuario.id:06d}'
+                tutor = Tutor.objects.create(
+                    usuario=usuario,
+                    ci=ci_temporal,
+                    direccion='Pendiente de actualización',
+                    fecha_nacimiento=date(2000, 1, 1)
+                )
+                serializer = self.get_serializer(tutor)
+                return Response(serializer.data)
+            else:
+                return Response({
+                    'error': 'El usuario autenticado no es un tutor'
+                }, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=True, methods=['get'])
     def mascotas(self, request, pk=None):

@@ -4,10 +4,12 @@
 import React, { useState, useEffect } from 'react';
 import { mascotasAPI, tutoresAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import '../../styles/Tables.css';
 
 const MisMascotas = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const [mascotas, setMascotas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mascotaDetalle, setMascotaDetalle] = useState(null);
@@ -29,8 +31,8 @@ const MisMascotas = () => {
 
   const cargarTutorYMascotas = async () => {
     try {
-      // Obtener datos del tutor actual
-      const tutorResponse = await tutoresAPI.getMe(user.email);
+      // Obtener datos del tutor actual usando la sesión autenticada
+      const tutorResponse = await tutoresAPI.getMe();
       setTutorData(tutorResponse.data);
 
       // Cargar mascotas del tutor
@@ -38,7 +40,7 @@ const MisMascotas = () => {
       setMascotas(mascotasResponse.data);
     } catch (error) {
       console.error('Error cargando datos:', error);
-      alert('Error al cargar mascotas. Por favor, recargue la página.');
+      toast.error('Error al cargar mascotas. Por favor, recargue la página.');
     } finally {
       setLoading(false);
     }
@@ -50,7 +52,7 @@ const MisMascotas = () => {
       setMascotaDetalle(response.data);
     } catch (error) {
       console.error('Error cargando historial:', error);
-      alert('Error al cargar el historial de la mascota.');
+      toast.error('Error al cargar el historial de la mascota');
     }
   };
 
@@ -66,7 +68,7 @@ const MisMascotas = () => {
     e.preventDefault();
 
     if (!tutorData) {
-      alert('Error: No se pudo identificar el tutor');
+      toast.error('Error: No se pudo identificar el tutor');
       return;
     }
 
@@ -79,7 +81,7 @@ const MisMascotas = () => {
       };
 
       await mascotasAPI.create(mascotaData);
-      alert('¡Mascota registrada exitosamente!');
+      toast.success(`¡Mascota ${nuevaMascota.nombre} registrada exitosamente!`);
 
       // Resetear formulario y recargar mascotas
       setNuevaMascota({
@@ -95,7 +97,7 @@ const MisMascotas = () => {
       cargarTutorYMascotas();
     } catch (error) {
       console.error('Error registrando mascota:', error);
-      alert('Error al registrar la mascota. Verifique los datos e intente nuevamente.');
+      toast.error('Error al registrar la mascota. Verifique los datos e intente nuevamente');
     }
   };
 
