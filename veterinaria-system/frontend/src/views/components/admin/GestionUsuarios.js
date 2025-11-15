@@ -1,15 +1,21 @@
 /**
- * GestionUsuarios - CRUD de usuarios
+ * GestionUsuarios - CRUD COMPLETO de usuarios
+ * El Admin puede crear, ver, editar y eliminar usuarios
+ * Arquitectura MVC - Vista de Admin
  */
 import React, { useState, useEffect } from 'react';
-import { usuariosAPI, rolesAPI } from '../../../services/api';
-import '../../styles/Tables.css';
+import { useToast } from '../../../context/ToastContext';
+import { usuariosAPI, rolesAPI } from '../../../models/api';
+import '../../../styles/Tables.css';
 
 const GestionUsuarios = () => {
+  const { success, error: showError } = useToast();
+
   const [usuarios, setUsuarios] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     email: '',
     password_hash: '',
@@ -18,209 +24,292 @@ const GestionUsuarios = () => {
     rol: '',
     activo: true,
   });
-  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
-    cargarUsuarios();
-    cargarRoles();
+    cargarDatos();
   }, []);
 
-  const cargarUsuarios = async () => {
+  const cargarDatos = async () => {
     try {
-      const response = await usuariosAPI.getAll();
-      setUsuarios(response.data.results || response.data);
+      setLoading(true);
+
+      // Cargar usuarios
+      const usuariosResponse = await usuariosAPI.getAll();
+      setUsuarios(usuariosResponse);
+
+      // Cargar roles
+      const rolesResponse = await rolesAPI.getAll();
+      setRoles(rolesResponse);
     } catch (error) {
-      console.error('Error cargando usuarios:', error);
+      console.error('Error cargando datos:', error);
+      showError('Error al cargar la información');
     } finally {
       setLoading(false);
     }
   };
 
-  const cargarRoles = async () => {
-    try {
-      const response = await rolesAPI.getAll();
-      setRoles(response.data);
-    } catch (error) {
-      console.error('Error cargando roles:', error);
-    }
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validaciones
+    if (!formData.email || !formData.nombre_completo || !formData.rol) {
+      showError('Complete todos los campos requeridos');
+      return;
+    }
+
+    if (!editingId && !formData.password_hash) {
+      showError('La contraseña es requerida para nuevos usuarios');
+      return;
+    }
+
     try {
       if (editingId) {
-        await usuariosAPI.update(editingId, formData);
+        // Actualizar usuario existente
+        const updateData = { ...formData };
+        // Solo enviar password si se cambió
+        if (!updateData.password_hash) {
+          delete updateData.password_hash;
+        }
+
+        await usuariosAPI.update(editingId, updateData);
+        success('Usuario actualizado exitosamente');
       } else {
+        // Crear nuevo usuario
         await usuariosAPI.create(formData);
+        success('Usuario creado exitosamente');
       }
-      cargarUsuarios();
-      cerrarModal();
+
+      // Cerrar modal y recargar
+      setShowModal(false);
+      resetForm();
+      cargarDatos();
     } catch (error) {
       console.error('Error guardando usuario:', error);
-      alert('Error al guardar usuario');
+      const errorMsg =
+        error.response?.data?.error || 'Error al guardar el usuario';
+      showError(errorMsg);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Está seguro de eliminar este usuario?')) {
-      try {
-        await usuariosAPI.delete(id);
-        cargarUsuarios();
-      } catch (error) {
-        console.error('Error eliminando usuario:', error);
-        alert('Error al eliminar usuario');
-      }
-    }
-  };
-
-  const abrirModal = (usuario = null) => {
-    if (usuario) {
-      setFormData({
-        email: usuario.email,
-        password_hash: '',
-        nombre_completo: usuario.nombre_completo,
-        telefono: usuario.telefono || '',
-        rol: usuario.rol,
-        activo: usuario.activo,
-      });
-      setEditingId(usuario.id);
-    } else {
-      setFormData({
-        email: '',
-        password_hash: '',
-        nombre_completo: '',
-        telefono: '',
-        rol: '',
-        activo: true,
-      });
-      setEditingId(null);
-    }
+  const handleEdit = (usuario) => {
+    setEditingId(usuario.id);
+    setFormData({
+      email: usuario.email,
+      password_hash: '', // No mostrar contraseña actual
+      nombre_completo: usuario.nombre_completo,
+      telefono: usuario.telefono || '',
+      rol: usuario.rol.id,
+      activo: usuario.activo,
+    });
     setShowModal(true);
   };
 
-  const cerrarModal = () => {
-    setShowModal(false);
+  const handleDelete = async (id) => {
+    if (!window.confirm('¿Está seguro de eliminar este usuario?')) {
+      return;
+    }
+
+    try {
+      await usuariosAPI.delete(id);
+      success('Usuario eliminado exitosamente');
+      cargarDatos();
+    } catch (error) {
+      console.error('Error eliminando usuario:', error);
+      showError('Error al eliminar el usuario');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      email: '',
+      password_hash: '',
+      nombre_completo: '',
+      telefono: '',
+      rol: '',
+      activo: true,
+    });
     setEditingId(null);
   };
 
+  const handleNuevo = () => {
+    resetForm();
+    setShowModal(true);
+  };
+
+  const isFormValid = () => {
+    if (!formData.email || !formData.nombre_completo || !formData.rol) {
+      return false;
+    }
+    if (!editingId && !formData.password_hash) {
+      return false;
+    }
+    return true;
+  };
+
   if (loading) {
-    return <div className="loading">Cargando usuarios...</div>;
+    return (
+      <div className="loading-container">
+        <h2>Cargando usuarios...</h2>
+      </div>
+    );
   }
 
   return (
     <div className="gestion-container">
-      <div className="gestion-header">
+      <div className="page-header">
         <h1>Gestión de Usuarios</h1>
-        <button className="btn btn-primary" onClick={() => abrirModal()}>
+        <button className="btn btn-primary" onClick={handleNuevo}>
           + Nuevo Usuario
         </button>
       </div>
 
-      <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Email</th>
-              <th>Nombre Completo</th>
-              <th>Teléfono</th>
-              <th>Rol</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {usuarios.map((usuario) => (
-              <tr key={usuario.id}>
-                <td>{usuario.id}</td>
-                <td>{usuario.email}</td>
-                <td>{usuario.nombre_completo}</td>
-                <td>{usuario.telefono || '-'}</td>
-                <td>
-                  <span className={`badge badge-${usuario.rol_nombre}`}>
-                    {usuario.rol_nombre}
-                  </span>
-                </td>
-                <td>
-                  <span className={`status ${usuario.activo ? 'status-active' : 'status-inactive'}`}>
-                    {usuario.activo ? 'Activo' : 'Inactivo'}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    className="btn-icon btn-edit"
-                    onClick={() => abrirModal(usuario)}
-                    title="Editar"
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    className="btn-icon btn-delete"
-                    onClick={() => handleDelete(usuario.id)}
-                    title="Eliminar"
-                  >
-                    🗑️
-                  </button>
-                </td>
+      {usuarios.length === 0 ? (
+        <div className="no-data">
+          <p>No hay usuarios registrados.</p>
+          <button className="btn btn-primary" onClick={handleNuevo}>
+            Crear Primer Usuario
+          </button>
+        </div>
+      ) : (
+        <div className="table-container">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre Completo</th>
+                <th>Email</th>
+                <th>Teléfono</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {usuarios.map((usuario) => (
+                <tr key={usuario.id}>
+                  <td>{usuario.id}</td>
+                  <td>{usuario.nombre_completo}</td>
+                  <td>{usuario.email}</td>
+                  <td>{usuario.telefono || '-'}</td>
+                  <td>
+                    <span className={`badge badge-${usuario.rol.nombre}`}>
+                      {usuario.rol.nombre}
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      className={`badge ${
+                        usuario.activo ? 'badge-activo' : 'badge-inactivo'
+                      }`}
+                    >
+                      {usuario.activo ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      className="btn btn-sm btn-secondary"
+                      onClick={() => handleEdit(usuario)}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => handleDelete(usuario.id)}
+                      style={{ marginLeft: '5px' }}
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
+      {/* Modal para Crear/Editar */}
       {showModal && (
-        <div className="modal-overlay" onClick={cerrarModal}>
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{editingId ? 'Editar Usuario' : 'Nuevo Usuario'}</h2>
-              <button className="modal-close" onClick={cerrarModal}>×</button>
-            </div>
+            <h2>{editingId ? 'Editar Usuario' : 'Nuevo Usuario'}</h2>
+
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Email *</label>
+                <label>
+                  Email <span className="required">*</span>
+                </label>
                 <input
                   type="email"
+                  name="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={handleChange}
                   required
+                  placeholder="usuario@ejemplo.com"
                 />
               </div>
 
               <div className="form-group">
-                <label>Contraseña {!editingId && '*'}</label>
+                <label>
+                  Contraseña {!editingId && <span className="required">*</span>}
+                </label>
                 <input
                   type="password"
+                  name="password_hash"
                   value={formData.password_hash}
-                  onChange={(e) => setFormData({ ...formData, password_hash: e.target.value })}
+                  onChange={handleChange}
                   required={!editingId}
-                  placeholder={editingId ? 'Dejar en blanco para no cambiar' : ''}
+                  placeholder={
+                    editingId
+                      ? 'Dejar en blanco para mantener la actual'
+                      : 'Contraseña'
+                  }
                 />
+                {editingId && (
+                  <small>Dejar en blanco si no desea cambiar la contraseña</small>
+                )}
               </div>
 
               <div className="form-group">
-                <label>Nombre Completo *</label>
+                <label>
+                  Nombre Completo <span className="required">*</span>
+                </label>
                 <input
                   type="text"
+                  name="nombre_completo"
                   value={formData.nombre_completo}
-                  onChange={(e) => setFormData({ ...formData, nombre_completo: e.target.value })}
+                  onChange={handleChange}
                   required
+                  placeholder="Nombre completo del usuario"
                 />
               </div>
 
               <div className="form-group">
                 <label>Teléfono</label>
                 <input
-                  type="text"
+                  type="tel"
+                  name="telefono"
                   value={formData.telefono}
-                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                  onChange={handleChange}
+                  placeholder="Número de teléfono"
                 />
               </div>
 
               <div className="form-group">
-                <label>Rol *</label>
+                <label>
+                  Rol <span className="required">*</span>
+                </label>
                 <select
+                  name="rol"
                   value={formData.rol}
-                  onChange={(e) => setFormData({ ...formData, rol: e.target.value })}
+                  onChange={handleChange}
                   required
                 >
                   <option value="">Seleccione un rol</option>
@@ -232,29 +321,178 @@ const GestionUsuarios = () => {
                 </select>
               </div>
 
-              <div className="form-group">
+              <div className="form-group checkbox-group">
                 <label>
                   <input
                     type="checkbox"
+                    name="activo"
                     checked={formData.activo}
-                    onChange={(e) => setFormData({ ...formData, activo: e.target.checked })}
+                    onChange={handleChange}
                   />
-                  {' '}Activo
+                  Usuario Activo
                 </label>
               </div>
 
               <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={cerrarModal}>
-                  Cancelar
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={!isFormValid()}
+                >
+                  {editingId ? 'Actualizar' : 'Crear'}
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  Guardar
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowModal(false)}
+                >
+                  Cancelar
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* Estilos del modal */}
+      <style>{`
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+
+        .modal-content {
+          background: white;
+          padding: 30px;
+          border-radius: 12px;
+          min-width: 500px;
+          max-width: 600px;
+          max-height: 90vh;
+          overflow-y: auto;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-group {
+          margin-bottom: 20px;
+        }
+
+        .form-group label {
+          display: block;
+          margin-bottom: 5px;
+          font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+          width: 100%;
+          padding: 10px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-size: 14px;
+        }
+
+        .form-group small {
+          display: block;
+          margin-top: 5px;
+          color: #666;
+          font-size: 12px;
+        }
+
+        .checkbox-group label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+          width: auto;
+        }
+
+        .required {
+          color: red;
+        }
+
+        .modal-actions {
+          display: flex;
+          gap: 10px;
+          margin-top: 20px;
+          justify-content: flex-end;
+        }
+
+        .badge-administrador {
+          background: #ef4444;
+          color: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+        }
+
+        .badge-veterinario {
+          background: #3b82f6;
+          color: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+        }
+
+        .badge-tutor {
+          background: #10b981;
+          color: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+        }
+
+        .badge-activo {
+          background: #10b981;
+          color: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+        }
+
+        .badge-inactivo {
+          background: #9ca3af;
+          color: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+        }
+
+        .no-data {
+          text-align: center;
+          padding: 40px;
+          background: #f9fafb;
+          border-radius: 8px;
+        }
+
+        .no-data p {
+          margin-bottom: 20px;
+          color: #666;
+        }
+
+        .loading-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 400px;
+        }
+
+        .page-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+        }
+      `}</style>
     </div>
   );
 };
